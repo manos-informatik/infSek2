@@ -76,7 +76,8 @@
   function initTopicPage(topic) {
     topicState = {
       topic: topic,
-      tasks: getTasks(topic)
+      tasks: getTasks(topic),
+      filter: "alle"
     };
 
     renderTopicPage();
@@ -84,6 +85,7 @@
 
   function renderTopicPage(anchorTaskId) {
     renderOverviewPanels();
+    renderTaskFilter();
     renderTaskList();
 
     if (anchorTaskId) {
@@ -121,11 +123,12 @@
   function renderTaskList() {
     var taskList = document.getElementById("task-list");
     var emptyState = document.getElementById("empty-state");
-    var filteredTasks = topicState.tasks;
+    var filteredTasks = getFilteredTasks();
 
     taskList.innerHTML = "";
 
     if (!filteredTasks.length) {
+      emptyState.textContent = topicState.filter === "alle" ? "Keine Aufgaben vorhanden." : "Keine passenden Aufgaben vorhanden.";
       emptyState.hidden = false;
       return;
     }
@@ -134,6 +137,58 @@
 
     filteredTasks.forEach(function (task) {
       taskList.appendChild(createTaskCard(task));
+    });
+  }
+
+  function renderTaskFilter() {
+    var panel = document.getElementById("task-filter-panel");
+    var filterOptions = [
+      { value: "alle", label: "alle" },
+      { value: "offen", label: "offen" },
+      { value: "unsicher", label: "unsicher" }
+    ];
+
+    if (!panel) {
+      return;
+    }
+
+    panel.innerHTML = [
+      "<fieldset class=\"task-filter-box\">",
+      "<legend class=\"visually-hidden\">Aufgaben filtern</legend>",
+      "<div class=\"task-filter-options\">",
+      filterOptions.map(function (option) {
+        return [
+          "<label class=\"task-filter-option\">",
+          "<input class=\"task-filter-input\" type=\"radio\" name=\"task-filter\" value=\"" + escapeHtml(option.value) + "\"" + (topicState.filter === option.value ? " checked" : "") + ">",
+          "<span>" + escapeHtml(option.label) + "</span>",
+          "</label>"
+        ].join("");
+      }).join(""),
+      "</div>",
+      "</fieldset>"
+    ].join("");
+
+    Array.prototype.slice.call(panel.querySelectorAll(".task-filter-input")).forEach(function (input) {
+      input.addEventListener("change", function () {
+        topicState.filter = input.value;
+        renderTopicPage();
+      });
+    });
+  }
+
+  function getFilteredTasks() {
+    return topicState.tasks.filter(function (task) {
+      var taskStateData = getTaskState(task.id);
+
+      if (topicState.filter === "offen") {
+        return !taskStateData.attempted;
+      }
+
+      if (topicState.filter === "unsicher") {
+        return taskStateData.confidence === "unsicher";
+      }
+
+      return true;
     });
   }
 

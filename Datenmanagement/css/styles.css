@@ -442,6 +442,75 @@ textarea {
   margin-top: 1.2rem;
 }
 
+.task-filter-panel {
+  margin-top: 0.9rem;
+}
+
+.task-filter-box {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(181, 171, 154, 0.48);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.task-filter-options {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.task-filter-option {
+  position: relative;
+}
+
+.task-filter-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.task-filter-option span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.8rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(181, 171, 154, 0.48);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--muted-strong);
+  cursor: pointer;
+}
+
+.task-filter-option span::before {
+  content: "";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.task-filter-input:checked + span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.task-filter-input:checked + span::before {
+  content: "✓";
+}
+
+.task-filter-input:focus-visible + span {
+  outline: 3px solid rgba(49, 92, 118, 0.35);
+  outline-offset: 3px;
+}
+
 .section-head {
   display: flex;
   justify-content: space-between;
@@ -719,6 +788,10 @@ textarea {
 
   .task-sections {
     grid-template-columns: 1fr;
+  }
+
+  .task-filter-options {
+    flex-direction: column;
   }
 
   .cloze-row {
