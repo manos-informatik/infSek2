@@ -85,7 +85,7 @@ window.DataManagementTasksSQL = [
       "Die erste Spalte in ORDER BY entscheidet ueber die Hauptsortierung.",
       "Die SQL-Klauseln muessen in syntaktisch korrekter Reihenfolge stehen."
     ],
-    solution: "Richtig ist Antwort b: SELECT titel, lehrkraft FROM Kurs WHERE semester = 2 ORDER BY lehrkraft ASC, titel DESC;",
+    solution: "Passend ist: SELECT titel, lehrkraft FROM Kurs WHERE semester = 2 ORDER BY lehrkraft ASC, titel DESC;",
     solutionFormat: "text",
     explanation: "Merke: Mehrere Sortierkriterien werden in ORDER BY von links nach rechts ausgewertet."
   },
@@ -166,7 +166,7 @@ window.DataManagementTasksSQL = [
       "Frage dich, welche Tabelle bei LEFT JOIN vollstaendig erhalten bleibt.",
       "NULL-Werte im Ergebnis sind oft ein Hinweis auf fehlende Treffer in einer der beteiligten Tabellen."
     ],
-    solution: "Korrekt sind a und c. INNER JOIN zeigt nur passende Datensatzkombinationen. LEFT JOIN behaelt alle Zeilen der linken Tabelle und fuellt nicht passende rechte Spalten mit NULL.",
+    solution: "Korrekt sind die Aussagen zum INNER JOIN mit Treffern in beiden Tabellen und zum LEFT JOIN mit moeglichen NULL-Werten in den Spalten der rechten Tabelle.",
     solutionFormat: "text",
     explanation: "Merke: Der Join-Typ bestimmt, welche Datensaetze trotz fehlender Treffer erhalten bleiben."
   },
@@ -268,7 +268,7 @@ window.DataManagementTasksSQL = [
       "Frage dich, zu welchem Zeitpunkt AVG(note) ueberhaupt bekannt ist.",
       "Die passende Klausel greift erst nach GROUP BY."
     ],
-    solution: "Richtig ist b: SELECT kurs_id, AVG(note) FROM Leistung GROUP BY kurs_id HAVING AVG(note) < 3.0;",
+    solution: "Passend ist: SELECT kurs_id, AVG(note) FROM Leistung GROUP BY kurs_id HAVING AVG(note) < 3.0;",
     solutionFormat: "text",
     explanation: "Merke: Bedingungen auf einzelne Zeilen kommen in WHERE, Bedingungen auf Gruppenwerte in HAVING."
   },
@@ -415,54 +415,107 @@ window.DataManagementTasksSQL = [
       "Drei Ebenen sind relevant: Eindeutigkeit, Verknuepfung mit anderen Tabellen und fachliche Gueltigkeit der Zeiten.",
       "Ein Fremdschluessel beschreibt keinen zusaetzlichen Komfort, sondern eine wichtige Integritaetsregel."
     ],
-    solution: "Passend sind a, c und e. reservierung_id identifiziert den Datensatz, kurs_id sollte auf die Kurstabelle verweisen und die Uhrzeiten brauchen eine fachliche Plausibilitaetsregel.",
+    solution: "Fachlich sinnvoll sind ein Primaerschluessel fuer reservierung_id, ein Fremdschluessel fuer kurs_id und eine Bedingung, die endzeit nach startzeit absichert.",
     solutionFormat: "text",
     explanation: "Merke: Gute Tabellendesigns sichern Schluessel, Beziehungen und fachliche Regeln moeglichst nahe am Datenmodell ab."
   },
   {
     id: "sql-10",
-    title: "Reihenfolge der SQL-Klauseln",
+    title: "SQL-Klauseln im Ablauf einsetzen",
     theme: "Fehlkonzepte",
     difficulty: "Basis",
     sections: [],
-    prompt: "Ordne die SQL-Klauseln in die uebliche Reihenfolge einer Abfrage.",
-    type: "order",
-    items: [
+    prompt: "Setze die passenden SQL-Begriffe in die Luecken ein.",
+    type: "match",
+    layout: "cloze",
+    fixedOptionOrder: true,
+    rows: [
       {
-        id: "select",
-        label: "SELECT"
+        id: "blank-1",
+        before: "Eine typische SQL-Abfrage beginnt mit",
+        after: "und legt damit die ausgegebenen Spalten fest."
       },
       {
-        id: "from",
-        label: "FROM"
+        id: "blank-2",
+        before: "Danach folgt",
+        after: ", um die verwendete Tabelle oder Datenquelle zu nennen."
       },
       {
-        id: "where",
-        label: "WHERE"
+        id: "blank-3",
+        before: "Wenn einzelne Zeilen gefiltert werden sollen, steht als naechster Schritt",
+        after: "."
       },
       {
-        id: "group-by",
-        label: "GROUP BY"
+        id: "blank-4",
+        before: "Fuer die Bildung von Gruppen wird anschliessend",
+        after: "eingesetzt."
       },
       {
-        id: "having",
+        id: "blank-5",
+        before: "Bedingungen fuer bereits gebildete Gruppen stehen in",
+        after: "."
+      },
+      {
+        id: "blank-6",
+        before: "Am Ende sorgt",
+        after: "fuer die Sortierung der Ergebnisliste."
+      }
+    ],
+    matchOptions: [
+      {
+        value: "join",
+        label: "JOIN"
+      },
+      {
+        value: "having",
         label: "HAVING"
       },
       {
-        id: "order-by",
+        value: "select",
+        label: "SELECT"
+      },
+      {
+        value: "limit",
+        label: "LIMIT"
+      },
+      {
+        value: "order-by",
         label: "ORDER BY"
+      },
+      {
+        value: "group-by",
+        label: "GROUP BY"
+      },
+      {
+        value: "from",
+        label: "FROM"
+      },
+      {
+        value: "distinct",
+        label: "DISTINCT"
+      },
+      {
+        value: "where",
+        label: "WHERE"
       }
     ],
     validation: {
-      correctOrder: ["select", "from", "where", "group-by", "having", "order-by"]
+      correctMap: {
+        "blank-1": "select",
+        "blank-2": "from",
+        "blank-3": "where",
+        "blank-4": "group-by",
+        "blank-5": "having",
+        "blank-6": "order-by"
+      }
     },
-    feedbackCorrect: "Die Standardreihenfolge sitzt. Viele Syntaxfehler entstehen nicht durch die Idee der Abfrage, sondern durch vertauschte Klauseln.",
-    feedbackIncorrect: "Pruefe besonders die Stellen von WHERE, GROUP BY und HAVING. Diese drei Klauseln werden oft verwechselt oder in eine falsche Reihenfolge gebracht.",
+    feedbackCorrect: "Die Grundstruktur stimmt. Viele SQL-Fehler entstehen nicht wegen der Idee der Abfrage, sondern wegen vertauschter Klauseln.",
+    feedbackIncorrect: "Pruefe besonders die Reihenfolge von WHERE, GROUP BY, HAVING und ORDER BY. Genau dort entstehen haeufige Vertauschungen.",
     hints: [
       "Denke zuerst an Spaltenauswahl und Datenquelle.",
       "Gruppierung kommt vor dem Filtern von Gruppen und beides vor der Sortierung."
     ],
-    solution: "SELECT -> FROM -> WHERE -> GROUP BY -> HAVING -> ORDER BY",
+    solution: "SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY",
     solutionFormat: "text",
     explanation: "Merke: Wer die Grundreihenfolge sicher beherrscht, vermeidet viele typische SQL-Fehler schon vor dem ersten Testlauf."
   }

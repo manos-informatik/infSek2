@@ -16,19 +16,19 @@ window.DataManagementTasksEERM = [
     options: [
       {
         value: "a",
-        label: "Buch ist ein Entitaetstyp. Titel, Erscheinungsjahr und Signatur sind Attribute. Signatur ist das Schluesselattribut."
+        label: "Buch ist ein Entitaetstyp mit den Attributen Titel, Erscheinungsjahr und Signatur; die Signatur ist das Schluesselattribut."
       },
       {
         value: "b",
-        label: "Titel ist der Entitaetstyp. Buch und Signatur sind Attribute davon."
+        label: "Titel ist der Entitaetstyp; Buch und Signatur werden dabei nur als zugehoerige Attribute modelliert."
       },
       {
         value: "c",
-        label: "Signatur ist ein Beziehungstyp zwischen Titel und Erscheinungsjahr."
+        label: "Signatur bildet den Beziehungstyp zwischen Titel und Erscheinungsjahr und ersetzt damit den Buchtyp."
       },
       {
         value: "d",
-        label: "Buch ist ein Attribut, weil zu jedem Buch mehrere Eigenschaften gehoeren."
+        label: "Buch wird nur als Attribut gefasst, weil mehrere Eigenschaften angeblich gegen einen Entitaetstyp sprechen."
       }
     ],
     validation: {
@@ -40,7 +40,7 @@ window.DataManagementTasksEERM = [
       "Ein Entitaetstyp beschreibt ein Objekt, zu dem mehrere Datensaetze gespeichert werden koennen.",
       "Ein Schluesselattribut identifiziert die einzelnen Auspraegungen dieses Objekts eindeutig."
     ],
-    solution: "Richtig ist a. Buch ist der Entitaetstyp; Titel, Erscheinungsjahr und Signatur sind Attribute. Die Signatur eignet sich als Schluesselattribut.",
+    solution: "Fachlich passend ist: Buch als Entitaetstyp mit den Attributen Titel, Erscheinungsjahr und Signatur; die Signatur eignet sich als Schluesselattribut.",
     solutionFormat: "text",
     explanation: "Merke: Entitaetstypen modellieren eigenstaendige Objekte, Attribute beschreiben deren Eigenschaften."
   },
@@ -147,7 +147,7 @@ window.DataManagementTasksEERM = [
       "Beginne auf der Seite Lehrkraft: Wie viele Kurse sind moeglich?",
       "Betrachte dann einen einzelnen Kurs: Wie viele Lehrkraefte sind erlaubt?"
     ],
-    solution: "Richtig ist b: 1:n von Lehrkraft zu Kurs.",
+    solution: "Passend ist eine 1:n-Beziehung von Lehrkraft zu Kurs.",
     solutionFormat: "text",
     explanation: "Merke: Kardinalitaeten beschreiben nicht nur, dass eine Beziehung existiert, sondern auch ihre fachlichen Grenzen."
   },
@@ -201,19 +201,19 @@ window.DataManagementTasksEERM = [
     options: [
       {
         value: "a",
-        label: "Sitzplatz ist eine schwache Entitaet, weil die Identifikation den Bezug zu Raum benoetigt."
+        label: "Sitzplatz ist eine schwache Entitaet, weil seine Identifikation den Bezug zu Raum braucht."
       },
       {
         value: "b",
-        label: "Raum ist eine schwache Entitaet, weil ein Raum mehrere Sitzplaetze besitzt."
+        label: "Raum ist eine schwache Entitaet, weil zu einem Raum mehrere Sitzplaetze gehoeren."
       },
       {
         value: "c",
-        label: "Sitzplatz ist ein normales Attribut von Raum und braucht keine eigene Entitaet."
+        label: "Sitzplatz ist nur ein normales Attribut von Raum und braucht deshalb keine eigene Entitaet."
       },
       {
         value: "d",
-        label: "Die Beziehung ist unbedeutend, weil Sitzplatznummern nur technische Daten sind."
+        label: "Die Beziehung ist fachlich bedeutungslos, weil Sitzplatznummern nur technische Angaben waeren."
       }
     ],
     validation: {
@@ -226,7 +226,7 @@ window.DataManagementTasksEERM = [
       "Frage dich, ob die Sitzplatznummer ohne Raumbezug eindeutig waere.",
       "Schwache Entitaeten brauchen zur Identifikation einen besitzenden Entitaetstyp."
     ],
-    solution: "Richtig ist a. Sitzplatz ist eine schwache Entitaet, weil erst Raum + Sitzplatznummer gemeinsam eindeutig identifizieren.",
+    solution: "Fachlich passend ist die Modellierung von Sitzplatz als schwache Entitaet, weil erst Raum und Sitzplatznummer gemeinsam eindeutig sind.",
     solutionFormat: "text",
     explanation: "Merke: Eine schwache Entitaet ist ohne ihren identifizierenden Bezug nicht eindeutig bestimmbar."
   },
@@ -245,15 +245,15 @@ window.DataManagementTasksEERM = [
       },
       {
         value: "b",
-        label: "Spezialisierung ist nur dann sinnvoll, wenn sich Untertypen fachlich unterscheiden oder zusaetzliche Regeln benoetigen."
+        label: "Spezialisierung ist nur sinnvoll, wenn Untertypen fachlich unterscheidbar sind oder zusaetzliche Regeln brauchen."
       },
       {
         value: "c",
-        label: "Jeder Untertyp benoetigt zwingend einen neuen Primaerschluessel, der nichts mit dem Obertyp zu tun hat."
+        label: "Jeder Untertyp benoetigt zwingend einen neuen Primaerschluessel, der vom Obertyp unabhaengig ist."
       },
       {
         value: "d",
-        label: "Disjunkt bedeutet, dass ein Exemplar gleichzeitig in mehreren Untertypen liegen muss."
+        label: "Disjunkt bedeutet, dass ein Exemplar gleichzeitig in mehreren Untertypen enthalten sein muss."
       }
     ],
     validation: {
@@ -265,7 +265,7 @@ window.DataManagementTasksEERM = [
       "Die Spezialisierung soll Redundanz reduzieren und Unterschiede sauber modellieren.",
       "Disjunkt und ueberlappend beschreiben, ob dieselbe Entitaet mehreren Untertypen angehoeren darf."
     ],
-    solution: "Korrekt sind a und b. Untertypen erben die Eigenschaften des Obertyps; Spezialisierung ist nur sinnvoll, wenn dadurch fachliche Unterschiede klarer modelliert werden.",
+    solution: "Korrekt sind die Aussagen zur Attributvererbung der Untertypen und zum fachlichen Nutzen einer Spezialisierung.",
     solutionFormat: "text",
     explanation: "Merke: Generalisierung und Spezialisierung dienen nicht der Dekoration, sondern der praezisen Strukturierung fachlicher Unterschiede."
   },
@@ -286,19 +286,19 @@ window.DataManagementTasksEERM = [
     options: [
       {
         value: "a",
-        label: "Das ist unproblematisch, weil dieselbe Information bewusst doppelt gespeichert werden sollte."
+        label: "Das ist unproblematisch, weil dieselbe Information bewusst an zwei Stellen gespeichert werden sollte."
       },
       {
         value: "b",
-        label: "Klasse wird inkonsistent modelliert. Wenn Klasse als eigene Entitaet gebraucht wird, sollte Schueler per Beziehung damit verbunden sein statt nur einen freien Text zu tragen."
+        label: "Klasse wird doppelt modelliert. Wenn Klasse als Entitaet gebraucht wird, sollte Schueler per Beziehung damit verknuepft sein."
       },
       {
         value: "c",
-        label: "Klasse darf nur als Attribut vorkommen, weil Schueler die wichtigere Entitaet ist."
+        label: "Klasse darf nur als Attribut vorkommen, auch wenn zusaetzliche Angaben wie Raum und Klassenlehrer vorliegen."
       },
       {
         value: "d",
-        label: "Der Fehler liegt nur darin, dass Klassenname kein Schluesselattribut ist."
+        label: "Der Fehler liegt nur darin, dass Klassenname nicht als eindeutiges Schluesselattribut markiert ist."
       }
     ],
     validation: {
@@ -310,7 +310,7 @@ window.DataManagementTasksEERM = [
       "Frage dich, ob Klasse in diesem Modell nur ein Text oder ein eigenstaendig verwaltetes Objekt ist.",
       "Wenn ein Konzept eigene Attribute und Beziehungen hat, reicht ein einfaches Attribut meist nicht mehr aus."
     ],
-    solution: "Richtig ist b. Klasse wird doppelt und uneinheitlich modelliert. Sinnvoller ist eine Entitaet Klasse mit Beziehung zu Schueler.",
+    solution: "Fachlich passend ist die Bewertung, dass Klasse doppelt modelliert wird und deshalb besser ueber eine Beziehung angebunden werden sollte.",
     solutionFormat: "text",
     explanation: "Merke: Ein fachliches Konzept sollte im Modell nicht gleichzeitig als freier Text und als eigenstaendige Entitaet auftreten."
   },
@@ -418,32 +418,73 @@ window.DataManagementTasksEERM = [
   },
   {
     id: "eerm-10",
-    title: "Ueberfuehrung einer n:m-Beziehung anordnen",
+    title: "Ueberfuehrung einer n:m-Beziehung einsetzen",
     theme: "Relationales Schema",
     difficulty: "Transfer",
     sections: [],
-    prompt: "Ordne die Schritte zur Ueberfuehrung einer n:m-Beziehung mit Beziehungsattributen in ein relationales Schema.",
-    type: "order",
-    items: [
+    prompt: "Setze die passenden Schritte zur Ueberfuehrung einer n:m-Beziehung mit Beziehungsattributen in die Luecken ein.",
+    type: "match",
+    layout: "cloze",
+    fixedOptionOrder: true,
+    rows: [
       {
-        id: "entity-tables",
-        label: "Entitaetstabellen mit ihren Primaerschluesseln bilden"
+        id: "blank-1",
+        before: "Zuerst werden die",
+        after: ", damit die benoetigten Schluessel bereits feststehen."
       },
       {
-        id: "bridge-table",
-        label: "Zusaetzliche Beziehungstabelle anlegen"
+        id: "blank-2",
+        before: "Danach wird eine",
+        after: ", welche die n:m-Beziehung aufnimmt."
       },
       {
-        id: "foreign-keys",
-        label: "Primaerschluessel der Entitaeten als Fremdschluessel in die Beziehungstabelle uebernehmen"
+        id: "blank-3",
+        before: "Im naechsten Schritt werden die",
+        after: ", damit die beteiligten Entitaeten verbunden sind."
       },
       {
-        id: "relationship-attributes",
+        id: "blank-4",
+        before: "Zum Schluss werden die",
+        after: ", weil sie genau zu dieser Beziehung gehoeren."
+      }
+    ],
+    matchOptions: [
+      {
+        value: "relationship-attributes",
         label: "Beziehungsattribute in die Beziehungstabelle aufnehmen"
+      },
+      {
+        value: "merge-entities",
+        label: "beide Entitaetstabellen zu einer gemeinsamen Tabelle zusammenfassen"
+      },
+      {
+        value: "entity-tables",
+        label: "Entitaetstabellen mit ihren Primaerschluesseln gebildet"
+      },
+      {
+        value: "remove-foreign-keys",
+        label: "Fremdschluessel aus der Beziehungstabelle wieder entfernt"
+      },
+      {
+        value: "bridge-table",
+        label: "zusaetzliche Beziehungstabelle angelegt"
+      },
+      {
+        value: "split-attributes",
+        label: "Beziehungsattribute auf beide Entitaetstabellen verteilt"
+      },
+      {
+        value: "foreign-keys",
+        label: "Primaerschluessel der Entitaeten als Fremdschluessel in die Beziehungstabelle uebernommen"
       }
     ],
     validation: {
-      correctOrder: ["entity-tables", "bridge-table", "foreign-keys", "relationship-attributes"]
+      correctMap: {
+        "blank-1": "entity-tables",
+        "blank-2": "bridge-table",
+        "blank-3": "foreign-keys",
+        "blank-4": "relationship-attributes"
+      }
     },
     feedbackCorrect: "Die Reihenfolge ist schluessig: Erst stehen die Entitaetstabellen fest, dann wird die Beziehungstabelle aufgebaut und mit Schluesseln sowie Beziehungsattributen gefuellt. Typisch falsch ist, Beziehungsattribute einer Entitaetstabelle zuzuschlagen.",
     feedbackIncorrect: "Pruefe, wann die Beziehungstabelle ueberhaupt existiert und welche Inhalte erst danach hineingehoeren. Beziehungsattribute entstehen nicht vor der Beziehungstabelle.",
@@ -451,7 +492,7 @@ window.DataManagementTasksEERM = [
       "Ohne die Entitaetstabellen gibt es noch keine Schluessel, die uebernommen werden koennten.",
       "Erst wenn die Beziehungstabelle steht, koennen ihre Fremdschluessel und weiteren Attribute eingetragen werden."
     ],
-    solution: "1. Entitaetstabellen bilden\n2. Beziehungstabelle anlegen\n3. Primaerschluessel als Fremdschluessel uebernehmen\n4. Beziehungsattribute in die Beziehungstabelle aufnehmen",
+    solution: "Entitaetstabellen mit ihren Primaerschluesseln bilden, zusaetzliche Beziehungstabelle anlegen, Primaerschluessel als Fremdschluessel uebernehmen, Beziehungsattribute in die Beziehungstabelle aufnehmen",
     solutionFormat: "text",
     explanation: "Merke: Die relationale Ueberfuehrung folgt der Modellstruktur: Entitaeten zuerst, Beziehungen danach."
   }

@@ -287,6 +287,155 @@
     return renderTextBlock(section.content);
   }
 
+  function hashString(value) {
+    var hash = 0;
+    var index;
+
+    for (index = 0; index < value.length; index += 1) {
+      hash = ((hash * 31) + value.charCodeAt(index)) >>> 0;
+    }
+
+    return hash;
+  }
+
+  function rotateArray(values, offset) {
+    if (!values.length) {
+      return [];
+    }
+
+    var normalizedOffset = offset % values.length;
+    return values.slice(normalizedOffset).concat(values.slice(0, normalizedOffset));
+  }
+
+  function isSameItemOrder(left, right) {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    return left.every(function (item, index) {
+      return item.value === right[index].value;
+    });
+  }
+
+  function getStableOrderedItems(items, seed) {
+    var ordered = (items || []).map(function (item, index) {
+      return {
+        item: item,
+        index: index,
+        weight: hashString(seed + "::" + (item.value || item.id || index))
+      };
+    }).sort(function (left, right) {
+      if (left.weight !== right.weight) {
+        return left.weight - right.weight;
+      }
+      return left.index - right.index;
+    }).map(function (entry) {
+      return entry.item;
+    });
+
+    if (isSameItemOrder(ordered, items) && ordered.length > 1) {
+      return rotateArray(ordered, 1);
+    }
+
+    return ordered;
+  }
+
+  function getChoiceOptions(task) {
+    var ordered = getStableOrderedItems(task.options || [], task.id + "::choice");
+    var correctOptions = task.validation && task.validation.correctOptions ? task.validation.correctOptions : [];
+    var correctIndex;
+    var swapIndex;
+
+    if (task.type === "single" && ordered.length > 1) {
+      correctIndex = ordered.findIndex(function (option) {
+        return option.value === task.validation.correctOption;
+      });
+
+      if (correctIndex === 0) {
+        swapIndex = Math.floor(ordered.length / 2);
+        ordered = ordered.slice();
+        ordered[0] = ordered[swapIndex];
+        ordered[swapIndex] = task.options.find(function (option) {
+          return option.value === task.validation.correctOption;
+        }) || ordered[swapIndex];
+      }
+    }
+
+    if (task.type === "multi" && ordered.length > 1 && correctOptions.indexOf(ordered[0].value) !== -1) {
+      swapIndex = ordered.findIndex(function (option) {
+        return correctOptions.indexOf(option.value) === -1;
+      });
+
+      if (swapIndex > 0) {
+        ordered = ordered.slice();
+        var firstOption = ordered[0];
+        ordered[0] = ordered[swapIndex];
+        ordered[swapIndex] = firstOption;
+      }
+    }
+
+    return ordered;
+  }
+
+  function getMatchOptions(task) {
+    if (task.fixedOptionOrder) {
+      return (task.matchOptions || []).slice();
+    }
+
+    return getStableOrderedItems(task.matchOptions || [], task.id + "::match");
+  }
+
+  function renderMatchControls(task, response) {
+    var matchOptions = getMatchOptions(task);
+
+    if (task.layout === "cloze") {
+      return [
+        "<fieldset class=\"answer-fieldset\">",
+        "<legend class=\"answer-label\">Lueckentext</legend>",
+        "<div class=\"cloze-list\">",
+        (task.rows || []).map(function (row) {
+          return [
+            "<label class=\"cloze-row\">",
+            "<span class=\"cloze-text\">" + escapeHtml(row.before) + "</span>",
+            "<select class=\"cloze-select\" data-match-row=\"" + escapeHtml(row.id) + "\">",
+            "<option value=\"\">Begriff ausw&auml;hlen</option>",
+            matchOptions.map(function (option) {
+              var selected = response && response[row.id] === option.value ? " selected" : "";
+              return "<option value=\"" + escapeHtml(option.value) + "\"" + selected + ">" + escapeHtml(option.label) + "</option>";
+            }).join(""),
+            "</select>",
+            row.after ? "<span class=\"cloze-text\">" + escapeHtml(row.after) + "</span>" : "",
+            "</label>"
+          ].join("");
+        }).join(""),
+        "</div>",
+        "</fieldset>"
+      ].join("");
+    }
+
+    return [
+      "<fieldset class=\"answer-fieldset\">",
+      "<legend class=\"answer-label\">Zuordnung</legend>",
+      "<div class=\"match-list\">",
+      (task.rows || []).map(function (row) {
+        return [
+          "<label class=\"match-row\">",
+          "<span>" + escapeHtml(row.label) + "</span>",
+          "<select data-match-row=\"" + escapeHtml(row.id) + "\">",
+          "<option value=\"\">Bitte ausw&auml;hlen</option>",
+          matchOptions.map(function (option) {
+            var selected = response && response[row.id] === option.value ? " selected" : "";
+            return "<option value=\"" + escapeHtml(option.value) + "\"" + selected + ">" + escapeHtml(option.label) + "</option>";
+          }).join(""),
+          "</select>",
+          "</label>"
+        ].join("");
+      }).join(""),
+      "</div>",
+      "</fieldset>"
+    ].join("");
+  }
+
   function renderAnswerControls(task, response) {
     if (task.type === "text") {
       return [
@@ -299,11 +448,12 @@
 
     if (task.type === "single" || task.type === "multi") {
       var inputType = task.type === "single" ? "radio" : "checkbox";
+      var choiceOptions = getChoiceOptions(task);
       return [
         "<fieldset class=\"answer-fieldset\">",
         "<legend class=\"answer-label\">Antwort</legend>",
         "<div class=\"choice-list\">",
-        (task.options || []).map(function (option) {
+        choiceOptions.map(function (option) {
           var isChecked = task.type === "single"
             ? response === option.value
             : Array.isArray(response) && response.indexOf(option.value) !== -1;
@@ -322,27 +472,7 @@
     }
 
     if (task.type === "match") {
-      return [
-        "<fieldset class=\"answer-fieldset\">",
-        "<legend class=\"answer-label\">Zuordnung</legend>",
-        "<div class=\"match-list\">",
-        (task.rows || []).map(function (row) {
-          return [
-            "<label class=\"match-row\">",
-            "<span>" + escapeHtml(row.label) + "</span>",
-            "<select data-match-row=\"" + escapeHtml(row.id) + "\">",
-            "<option value=\"\">Bitte ausw&auml;hlen</option>",
-            (task.matchOptions || []).map(function (option) {
-              var selected = response && response[row.id] === option.value ? " selected" : "";
-              return "<option value=\"" + escapeHtml(option.value) + "\"" + selected + ">" + escapeHtml(option.label) + "</option>";
-            }).join(""),
-            "</select>",
-            "</label>"
-          ].join("");
-        }).join(""),
-        "</div>",
-        "</fieldset>"
-      ].join("");
+      return renderMatchControls(task, response);
     }
 
     if (task.type === "order") {
