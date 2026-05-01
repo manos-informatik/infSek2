@@ -105,7 +105,6 @@
     overall.innerHTML = [
       "<div class=\"panel-heading\">",
       "<h2>Fortschritt</h2>",
-      "<p>" + tasks.length + " Aufgaben</p>",
       "</div>",
       "<div class=\"summary-metrics\">",
       renderMetric(stats.attempted, "bearbeitet"),
@@ -124,7 +123,6 @@
     var emptyState = document.getElementById("empty-state");
     var filteredTasks = topicState.tasks;
 
-    document.getElementById("task-count-text").textContent = filteredTasks.length + " Aufgaben";
     taskList.innerHTML = "";
 
     if (!filteredTasks.length) {
