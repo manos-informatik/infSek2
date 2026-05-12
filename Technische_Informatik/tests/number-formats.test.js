@@ -59,6 +59,8 @@ result = Practice.evaluateStudentAnswer(leadingZeroTask, {
   overflowKind: ""
 });
 assert.equal(result.correct, true);
+assert.equal(result.earnedPoints, 2);
+assert.equal(result.maxPoints, 2);
 
 result = Practice.evaluateStudentAnswer(leadingZeroTask, {
   resultBits: "11",
@@ -75,5 +77,34 @@ result = Practice.evaluateStudentAnswer(leadingZeroTask, {
 });
 assert.equal(result.valid, false);
 assert.match(result.message, /0 und 1/);
+
+const eightBitOverflowTask = task(8, REPRESENTATION.UNSIGNED, OPERATION.ADD, "11111111", "00000001");
+result = Practice.evaluateStudentAnswer(eightBitOverflowTask, {
+  resultBits: "00000000",
+  overflowStatus: "yes",
+  overflowKind: OVERFLOW_KIND.UNSIGNED_ADDITION
+});
+assert.equal(result.correct, true);
+assert.equal(result.earnedPoints, 4);
+assert.equal(result.maxPoints, 4);
+
+result = Practice.evaluateStudentAnswer(eightBitOverflowTask, {
+  resultBits: "00000000",
+  overflowStatus: "yes",
+  overflowKind: OVERFLOW_KIND.UNSIGNED_SUBTRACTION
+});
+assert.equal(result.correct, false);
+assert.equal(result.resultCorrect, true);
+assert.equal(result.overflowStatusCorrect, true);
+assert.equal(result.overflowKindCorrect, false);
+assert.equal(result.earnedPoints, 3);
+
+const rngValues = [0.1, 0.7, 0.2, 0.8, 0.1, 0.2, 0.3];
+const generated = Practice.generateTask({ bitWidth: 4 }, function () {
+  return rngValues.shift() || 0.4;
+});
+assert.equal(generated.bitWidth, 4);
+assert.ok([REPRESENTATION.UNSIGNED, REPRESENTATION.TWOS].includes(generated.representation));
+assert.ok([OPERATION.ADD, OPERATION.SUB].includes(generated.operation));
 
 console.log("number-formats.test.js: alle Tests bestanden");

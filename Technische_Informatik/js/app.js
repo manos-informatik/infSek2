@@ -6,7 +6,11 @@
     task: null,
     taskNumber: 0,
     attempted: 0,
-    correct: 0
+    correct: 0,
+    score: 0,
+    currentTaskAttempted: false,
+    currentTaskCorrect: false,
+    currentTaskScore: 0
   };
   var elements = {};
 
@@ -14,8 +18,6 @@
 
   function init() {
     elements.bitWidth = document.getElementById("bit-width");
-    elements.representation = document.getElementById("representation");
-    elements.operation = document.getElementById("operation");
     elements.newTaskButton = document.getElementById("new-task-button");
     elements.nextTaskButton = document.getElementById("next-task-button");
     elements.answerForm = document.getElementById("answer-form");
@@ -31,13 +33,12 @@
     elements.operatorSymbol = document.getElementById("operator-symbol");
     elements.attemptedCount = document.getElementById("attempted-count");
     elements.correctCount = document.getElementById("correct-count");
+    elements.scoreCount = document.getElementById("score-count");
 
     elements.newTaskButton.addEventListener("click", createNewTask);
     elements.nextTaskButton.addEventListener("click", createNewTask);
     elements.answerForm.addEventListener("submit", handleSubmit);
     elements.bitWidth.addEventListener("change", createNewTask);
-    elements.representation.addEventListener("change", createNewTask);
-    elements.operation.addEventListener("change", createNewTask);
 
     Array.prototype.slice.call(document.querySelectorAll("input[name='overflowStatus']")).forEach(function (input) {
       input.addEventListener("change", syncOverflowKindState);
@@ -48,15 +49,16 @@
 
   function getSettings() {
     return {
-      bitWidth: Number(elements.bitWidth.value),
-      representation: elements.representation.value,
-      operation: elements.operation.value
+      bitWidth: Number(elements.bitWidth.value)
     };
   }
 
   function createNewTask() {
     state.task = Practice.generateTask(getSettings());
     state.taskNumber += 1;
+    state.currentTaskAttempted = false;
+    state.currentTaskCorrect = false;
+    state.currentTaskScore = 0;
     renderTask();
     resetAnswer();
   }
@@ -117,19 +119,35 @@
     result = Practice.evaluateStudentAnswer(state.task, collectAnswer());
 
     if (result.valid) {
-      state.attempted += 1;
-      if (result.correct) {
-        state.correct += 1;
+      if (!state.currentTaskAttempted) {
+        state.attempted += 1;
+        state.currentTaskAttempted = true;
       }
+
+      if (result.earnedPoints > state.currentTaskScore) {
+        state.score += result.earnedPoints - state.currentTaskScore;
+        state.currentTaskScore = result.earnedPoints;
+      }
+
+      if (result.correct && !state.currentTaskCorrect) {
+        state.correct += 1;
+        state.currentTaskCorrect = true;
+      }
+
       renderStats();
     }
 
     renderFeedback(result);
+
+    if (result.valid && result.correct) {
+      showCelebration();
+    }
   }
 
   function renderStats() {
     elements.attemptedCount.textContent = String(state.attempted);
     elements.correctCount.textContent = String(state.correct);
+    elements.scoreCount.textContent = String(state.score);
   }
 
   function hideFeedback() {
@@ -162,6 +180,10 @@
     elements.feedbackPanel.appendChild(label);
     elements.feedbackPanel.appendChild(createFacts(result));
 
+    if (!result.correct) {
+      elements.feedbackPanel.appendChild(createMistakeNotes(result));
+    }
+
     message.textContent = result.expected.reason;
     elements.feedbackPanel.appendChild(message);
   }
@@ -170,12 +192,44 @@
     var facts = document.createElement("div");
 
     facts.className = "feedback-facts";
+    facts.appendChild(createFact("Punkte", result.earnedPoints + " von " + result.maxPoints, false));
     facts.appendChild(createFact("Ergebnis", result.resultCorrect ? "richtig" : "falsch", false));
-    facts.appendChild(createFact("Overflow", result.overflowCorrect ? "richtig" : "falsch", false));
+    facts.appendChild(createFact("Overflow erkannt", result.overflowStatusCorrect ? "richtig" : "falsch", false));
+    if (result.overflowKindApplies) {
+      facts.appendChild(createFact("Overflow-Art", result.overflowKindCorrect ? "richtig" : "falsch", false));
+    }
     facts.appendChild(createFact("Korrektes Ergebnis", result.expected.resultBits, true));
     facts.appendChild(createFact("Korrekte Einschaetzung", Practice.getOverflowLabel(result.expected.overflowKind), false));
 
     return facts;
+  }
+
+  function createMistakeNotes(result) {
+    var list = document.createElement("ul");
+
+    list.className = "mistake-list";
+
+    if (!result.resultCorrect) {
+      appendMistake(list, "Ergebnis: Das Bitmuster muss exakt " + result.expected.bitWidth + " Stellen haben und nach dem Abschneiden " + result.expected.resultBits + " lauten.");
+    }
+
+    if (!result.overflowStatusCorrect) {
+      appendMistake(list, result.expected.overflow
+        ? "Overflow: Hier liegt ein Overflow vor, weil das mathematische Ergebnis nicht in den darstellbaren Bereich passt."
+        : "Overflow: Hier liegt kein Overflow vor, weil das mathematische Ergebnis im darstellbaren Bereich bleibt.");
+    }
+
+    if (result.overflowKindApplies && !result.overflowKindCorrect) {
+      appendMistake(list, "Overflow-Art: Passend ist \"" + Practice.getOverflowLabel(result.expected.overflowKind) + "\".");
+    }
+
+    return list;
+  }
+
+  function appendMistake(list, text) {
+    var item = document.createElement("li");
+    item.textContent = text;
+    list.appendChild(item);
   }
 
   function createFact(labelText, valueText, isCode) {
@@ -190,5 +244,36 @@
     fact.appendChild(value);
 
     return fact;
+  }
+
+  function showCelebration() {
+    var oldCelebration = document.querySelector(".celebration");
+    var celebration = document.createElement("div");
+    var label = document.createElement("strong");
+    var index;
+    var particle;
+
+    if (oldCelebration) {
+      oldCelebration.remove();
+    }
+
+    celebration.className = "celebration";
+    celebration.setAttribute("aria-live", "polite");
+    label.textContent = "Alles richtig!";
+    celebration.appendChild(label);
+
+    for (index = 0; index < 18; index += 1) {
+      particle = document.createElement("span");
+      particle.style.setProperty("--angle", (index * 20) + "deg");
+      particle.style.setProperty("--distance", (72 + (index % 4) * 14) + "px");
+      particle.style.setProperty("--delay", (index % 6) * 0.035 + "s");
+      celebration.appendChild(particle);
+    }
+
+    document.body.appendChild(celebration);
+
+    window.setTimeout(function () {
+      celebration.remove();
+    }, 1400);
   }
 })();

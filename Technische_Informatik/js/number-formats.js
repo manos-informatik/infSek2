@@ -280,15 +280,54 @@
     return {
       valid: true,
       resultBits: resultBits,
+      overflowStatus: overflowStatus,
       overflowKind: overflowStatus === "yes" ? overflowKind : OVERFLOW_KIND.NONE
+    };
+  }
+
+  function getResultPointValue(bitWidth) {
+    return normalizeBitWidth(bitWidth) >= 8 ? 2 : 1;
+  }
+
+  function scoreStudentAnswer(expected, validation) {
+    var expectedOverflowStatus = expected.overflow ? "yes" : "no";
+    var resultPointValue = getResultPointValue(expected.bitWidth);
+    var resultCorrect = validation.resultBits === expected.resultBits;
+    var overflowStatusCorrect = validation.overflowStatus === expectedOverflowStatus;
+    var overflowKindApplies = expected.overflow;
+    var overflowKindCorrect = overflowKindApplies
+      ? validation.overflowKind === expected.overflowKind
+      : true;
+    var maxPoints = resultPointValue + 1 + (overflowKindApplies ? 1 : 0);
+    var earnedPoints = 0;
+
+    if (resultCorrect) {
+      earnedPoints += resultPointValue;
+    }
+
+    if (overflowStatusCorrect) {
+      earnedPoints += 1;
+    }
+
+    if (overflowKindApplies && overflowKindCorrect) {
+      earnedPoints += 1;
+    }
+
+    return {
+      resultCorrect: resultCorrect,
+      overflowStatusCorrect: overflowStatusCorrect,
+      overflowKindCorrect: overflowKindCorrect,
+      overflowKindApplies: overflowKindApplies,
+      earnedPoints: earnedPoints,
+      maxPoints: maxPoints,
+      resultPointValue: resultPointValue
     };
   }
 
   function evaluateStudentAnswer(taskInput, answerInput) {
     var validation = validateStudentAnswer(taskInput, answerInput);
     var expected;
-    var resultCorrect;
-    var overflowCorrect;
+    var score;
 
     if (!validation.valid) {
       return {
@@ -299,15 +338,21 @@
     }
 
     expected = evaluateOperation(taskInput);
-    resultCorrect = validation.resultBits === expected.resultBits;
-    overflowCorrect = validation.overflowKind === expected.overflowKind;
+    score = scoreStudentAnswer(expected, validation);
 
     return {
       valid: true,
-      correct: resultCorrect && overflowCorrect,
-      resultCorrect: resultCorrect,
-      overflowCorrect: overflowCorrect,
+      correct: score.earnedPoints === score.maxPoints,
+      resultCorrect: score.resultCorrect,
+      overflowCorrect: score.overflowStatusCorrect && score.overflowKindCorrect,
+      overflowStatusCorrect: score.overflowStatusCorrect,
+      overflowKindCorrect: score.overflowKindCorrect,
+      overflowKindApplies: score.overflowKindApplies,
+      earnedPoints: score.earnedPoints,
+      maxPoints: score.maxPoints,
+      resultPointValue: score.resultPointValue,
       givenResultBits: validation.resultBits,
+      givenOverflowStatus: validation.overflowStatus,
       givenOverflowKind: validation.overflowKind,
       expected: expected
     };
@@ -395,6 +440,7 @@
     evaluateOperation: evaluateOperation,
     evaluateStudentAnswer: evaluateStudentAnswer,
     generateTask: generateTask,
+    getResultPointValue: getResultPointValue,
     getOperationLabel: getOperationLabel,
     getOperatorSymbol: getOperatorSymbol,
     getOverflowLabel: getOverflowLabel,

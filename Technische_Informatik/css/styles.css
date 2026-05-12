@@ -11,6 +11,7 @@
 }
 
 .practice-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 0.15rem;
 }
 
@@ -119,12 +120,107 @@
 
 .feedback-fact strong,
 .feedback-fact code {
+  display: block;
+  overflow-wrap: anywhere;
   color: var(--ink);
   font-weight: 700;
 }
 
 .feedback-fact code {
   font-family: "Cascadia Code", Consolas, monospace;
+}
+
+.mistake-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.celebration {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  width: 12rem;
+  aspect-ratio: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: celebration-pop 1.35s ease forwards;
+}
+
+.celebration strong {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 9.2rem;
+  min-height: 3.3rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(40, 89, 71, 0.22);
+  background: var(--success-soft);
+  color: var(--success);
+  box-shadow: var(--shadow-lg);
+  font-size: 1.15rem;
+}
+
+.celebration span {
+  position: absolute;
+  width: 0.55rem;
+  height: 1rem;
+  border-radius: 0.2rem;
+  background: var(--accent);
+  transform: rotate(var(--angle)) translateY(0);
+  animation: celebration-spark 0.95s ease-out var(--delay) forwards;
+}
+
+.celebration span:nth-child(3n) {
+  background: var(--warm);
+}
+
+.celebration span:nth-child(3n + 1) {
+  background: var(--success);
+}
+
+@keyframes celebration-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.78);
+  }
+
+  14% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+}
+
+@keyframes celebration-spark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(0) scale(0.7);
+  }
+
+  24% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(calc(-1 * var(--distance))) scale(1);
+  }
 }
 
 @media (max-width: 900px) {
@@ -134,6 +230,10 @@
 
   .settings-panel {
     position: static;
+  }
+
+  .practice-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -146,5 +246,20 @@
 
   .operator-symbol {
     min-height: 2.5rem;
+  }
+
+  .practice-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration,
+  .celebration span {
+    animation: none;
+  }
+
+  .celebration {
+    opacity: 1;
   }
 }
