@@ -26,6 +26,8 @@
     elements.taskBitWidth = document.getElementById("task-bit-width");
     elements.taskOperation = document.getElementById("task-operation");
     elements.taskRepresentation = document.getElementById("task-representation");
+    elements.representationCallout = document.getElementById("representation-callout");
+    elements.representationCalloutLabel = document.getElementById("representation-callout-label");
     elements.leftOperand = document.getElementById("left-operand");
     elements.rightOperand = document.getElementById("right-operand");
     elements.operatorSymbol = document.getElementById("operator-symbol");
@@ -66,10 +68,17 @@
     elements.taskBitWidth.textContent = task.bitWidth + " Bit";
     elements.taskOperation.textContent = Practice.getOperationLabel(task.operation);
     elements.taskRepresentation.textContent = Practice.getRepresentationLabel(task.representation);
+    elements.taskRepresentation.className = "tag representation-tag " + getRepresentationClass(task.representation);
+    elements.representationCallout.className = "representation-callout " + getRepresentationClass(task.representation);
+    elements.representationCalloutLabel.textContent = Practice.getRepresentationLabel(task.representation);
     elements.leftOperand.textContent = task.leftBits;
     elements.rightOperand.textContent = task.rightBits;
     elements.operatorSymbol.textContent = Practice.getOperatorSymbol(task.operation);
     elements.resultInput.placeholder = "z. B. " + "0".repeat(Math.max(0, task.bitWidth - 2)) + "11";
+  }
+
+  function getRepresentationClass(representation) {
+    return representation === Practice.REPRESENTATION.TWOS ? "is-twos" : "is-unsigned";
   }
 
   function resetAnswer() {
@@ -161,7 +170,6 @@
 
   function renderFeedback(result) {
     var label = document.createElement("span");
-    var message = document.createElement("p");
 
     elements.feedbackPanel.hidden = false;
     elements.feedbackPanel.textContent = "";
@@ -171,6 +179,7 @@
       elements.feedbackPanel.classList.add("is-warning");
       label.className = "feedback-label";
       label.textContent = "Eingabe pruefen";
+      var message = document.createElement("p");
       message.textContent = result.message;
       elements.feedbackPanel.appendChild(label);
       elements.feedbackPanel.appendChild(message);
@@ -187,30 +196,35 @@
       elements.feedbackPanel.appendChild(createMistakeNotes(result));
     }
 
-    message.textContent = result.expected.reason;
-    elements.feedbackPanel.appendChild(message);
+    elements.feedbackPanel.appendChild(createReasonBox(result.expected.reason));
   }
 
   function createFacts(result) {
     var facts = document.createElement("div");
 
     facts.className = "feedback-facts";
-    facts.appendChild(createFact("Punkte", result.earnedPoints + " von " + result.maxPoints, false));
-    facts.appendChild(createFact("Ergebnis", result.resultCorrect ? "richtig" : "falsch", false));
-    facts.appendChild(createFact("Overflow erkannt", result.overflowStatusCorrect ? "richtig" : "falsch", false));
+    facts.appendChild(createFact("Punkte", result.earnedPoints + " von " + result.maxPoints, false, result.correct ? "is-correct" : "is-warning"));
+    facts.appendChild(createFact("Ergebnis", result.resultCorrect ? "richtig" : "falsch", false, result.resultCorrect ? "is-correct" : "is-incorrect"));
+    facts.appendChild(createFact("Overflow erkannt", result.overflowStatusCorrect ? "richtig" : "falsch", false, result.overflowStatusCorrect ? "is-correct" : "is-incorrect"));
     if (result.overflowKindApplies) {
-      facts.appendChild(createFact("Overflow-Art", result.overflowKindCorrect ? "richtig" : "falsch", false));
+      facts.appendChild(createFact("Overflow-Art", result.overflowKindCorrect ? "richtig" : "falsch", false, result.overflowKindCorrect ? "is-correct" : "is-incorrect"));
     }
-    facts.appendChild(createFact("Korrektes Ergebnis", result.expected.resultBits, true));
-    facts.appendChild(createFact("Korrekte Einschaetzung", Practice.getOverflowLabel(result.expected.overflowKind), false));
+    facts.appendChild(createFact("Korrektes Ergebnis", result.expected.resultBits, true, "is-answer"));
+    facts.appendChild(createFact("Korrekte Einschaetzung", Practice.getOverflowLabel(result.expected.overflowKind), false, "is-answer"));
 
     return facts;
   }
 
   function createMistakeNotes(result) {
+    var panel = document.createElement("section");
+    var heading = document.createElement("h3");
     var list = document.createElement("ul");
 
+    panel.className = "mistake-panel";
+    heading.textContent = "Fehlerhinweise";
     list.className = "mistake-list";
+    panel.appendChild(heading);
+    panel.appendChild(list);
 
     if (!result.resultCorrect) {
       appendMistake(list, "Ergebnis: Das Bitmuster muss exakt " + result.expected.bitWidth + " Stellen haben und nach dem Abschneiden " + result.expected.resultBits + " lauten.");
@@ -226,7 +240,7 @@
       appendMistake(list, "Overflow-Art: Passend ist \"" + Practice.getOverflowLabel(result.expected.overflowKind) + "\".");
     }
 
-    return list;
+    return panel;
   }
 
   function appendMistake(list, text) {
@@ -235,12 +249,26 @@
     list.appendChild(item);
   }
 
-  function createFact(labelText, valueText, isCode) {
+  function createReasonBox(reasonText) {
+    var panel = document.createElement("section");
+    var heading = document.createElement("h3");
+    var text = document.createElement("p");
+
+    panel.className = "reason-panel";
+    heading.textContent = "Begruendung";
+    text.textContent = reasonText;
+    panel.appendChild(heading);
+    panel.appendChild(text);
+
+    return panel;
+  }
+
+  function createFact(labelText, valueText, isCode, modifierClass) {
     var fact = document.createElement("div");
     var label = document.createElement("span");
     var value = document.createElement(isCode ? "code" : "strong");
 
-    fact.className = "feedback-fact";
+    fact.className = "feedback-fact" + (modifierClass ? " " + modifierClass : "");
     label.textContent = labelText;
     value.textContent = valueText;
     fact.appendChild(label);
@@ -268,7 +296,7 @@
     for (index = 0; index < 18; index += 1) {
       particle = document.createElement("span");
       particle.style.setProperty("--angle", (index * 20) + "deg");
-      particle.style.setProperty("--distance", (72 + (index % 4) * 14) + "px");
+      particle.style.setProperty("--distance", (112 + (index % 4) * 20) + "px");
       particle.style.setProperty("--delay", (index % 6) * 0.035 + "s");
       celebration.appendChild(particle);
     }
