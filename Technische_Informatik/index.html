@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Technische Informatik | Rechnen mit Zahlenformaten</title>
+  <meta name="description" content="Interaktive Uebungsflaeche zu Addition, Subtraktion und Overflow in festen Bitbreiten.">
+  <link rel="stylesheet" href="../Datenmanagement/css/styles.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script defer src="js/number-formats.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+
+  <header class="site-header site-header-compact">
+    <div class="site-shell site-header-inner">
+      <div>
+        <p class="eyebrow">Technische Informatik</p>
+        <h1>Rechnen mit Zahlenformaten</h1>
+      </div>
+      <nav class="page-nav" aria-label="Seitennavigation">
+        <a class="secondary-link" href="../Datenmanagement/index.html">Datenmanagement</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="site-shell page-content">
+    <section class="practice-layout" aria-label="Uebungsflaeche Zahlenformate">
+      <aside class="dashboard-card settings-panel" aria-labelledby="settings-title">
+        <div class="panel-heading">
+          <h2 id="settings-title">Aufgabe einstellen</h2>
+        </div>
+
+        <form id="settings-form" class="filter-form">
+          <label for="bit-width">
+            <span>Bitbreite</span>
+            <select id="bit-width" name="bitWidth">
+              <option value="4">4 Bit</option>
+              <option value="8" selected>8 Bit</option>
+            </select>
+          </label>
+
+          <label for="representation">
+            <span>Zahlendarstellung</span>
+            <select id="representation" name="representation">
+              <option value="mixed" selected>gemischt</option>
+              <option value="unsigned">ohne Vorzeichen</option>
+              <option value="twos">Zweierkomplement</option>
+            </select>
+          </label>
+
+          <label for="operation">
+            <span>Rechenart</span>
+            <select id="operation" name="operation">
+              <option value="mixed" selected>Addition oder Subtraktion</option>
+              <option value="add">Addition</option>
+              <option value="sub">Subtraktion</option>
+            </select>
+          </label>
+
+          <div class="filter-actions">
+            <button class="button-primary" type="button" id="new-task-button">Neue Aufgabe</button>
+          </div>
+        </form>
+
+        <div class="summary-metrics practice-stats" aria-label="Bearbeitungsstand">
+          <div class="metric">
+            <strong id="attempted-count">0</strong>
+            <span>abgegeben</span>
+          </div>
+          <div class="metric">
+            <strong id="correct-count">0</strong>
+            <span>korrekt</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="task-card practice-card" aria-labelledby="task-title">
+        <header class="task-card-header">
+          <div class="task-title-block">
+            <p class="eyebrow" id="task-kicker">Zufallsaufgabe</p>
+            <h2 id="task-title">Berechne mit fester Bitbreite</h2>
+            <div class="badge-row" aria-label="Aufgabendaten">
+              <span class="tag" id="task-bit-width">8 Bit</span>
+              <span class="tag" id="task-operation">Addition</span>
+              <span class="tag" id="task-representation">ohne Vorzeichen</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="calculation-board" aria-label="Aufgabe">
+          <div class="operand-line">
+            <code class="bit-string" id="left-operand">00000000</code>
+            <span class="operator-symbol" id="operator-symbol">+</span>
+            <code class="bit-string" id="right-operand">00000000</code>
+          </div>
+        </div>
+
+        <form id="answer-form" class="answer-form" novalidate>
+          <label class="answer-fieldset" for="result-input">
+            <span class="answer-label">Ergebnis mit fester Bitbreite</span>
+            <input id="result-input" class="binary-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="z. B. 00101101">
+          </label>
+
+          <fieldset class="answer-fieldset overflow-fieldset">
+            <legend class="answer-label">Overflow-Einschaetzung</legend>
+            <div class="choice-list overflow-choice-list">
+              <label class="choice-option">
+                <input type="radio" name="overflowStatus" value="no">
+                <span>kein Overflow</span>
+              </label>
+              <label class="choice-option">
+                <input type="radio" name="overflowStatus" value="yes">
+                <span>Overflow liegt vor</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <label class="answer-fieldset" for="overflow-kind">
+            <span class="answer-label">Art des Overflows</span>
+            <select id="overflow-kind" disabled>
+              <option value="">Nur auswaehlen, falls Overflow vorliegt</option>
+              <option value="unsigned-addition">ohne Vorzeichen: Uebertrag aus dem hoechsten Bit bei Addition</option>
+              <option value="unsigned-subtraction">ohne Vorzeichen: negatives Ergebnis / Borrow bei Subtraktion</option>
+              <option value="twos-positive">Zweierkomplement: zwei positive Zahlen ergeben ein negatives Ergebnis</option>
+              <option value="twos-negative">Zweierkomplement: zwei negative Zahlen ergeben ein positives Ergebnis</option>
+            </select>
+          </label>
+
+          <div class="task-actions">
+            <button class="button-primary" type="submit">Abgeben</button>
+            <button class="button-secondary" type="button" id="next-task-button">Naechste Aufgabe</button>
+          </div>
+        </form>
+
+        <section class="feedback-panel practice-feedback" id="feedback-panel" aria-live="polite" hidden></section>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

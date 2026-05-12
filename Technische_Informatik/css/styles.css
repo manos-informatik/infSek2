@@ -1,0 +1,150 @@
+.practice-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.85fr) minmax(0, 1.8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.settings-panel {
+  position: sticky;
+  top: 1rem;
+}
+
+.practice-stats {
+  margin-top: 0.15rem;
+}
+
+.practice-card {
+  gap: 1.15rem;
+}
+
+.calculation-board {
+  padding: 1.2rem;
+  border: 1px solid rgba(181, 171, 154, 0.48);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(49, 92, 118, 0.08), rgba(138, 107, 51, 0.08)),
+    rgba(255, 255, 255, 0.66);
+}
+
+.operand-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.bit-string,
+.operator-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 4rem;
+  border-radius: 14px;
+}
+
+.bit-string {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  overflow-wrap: anywhere;
+  border: 1px solid rgba(49, 92, 118, 0.16);
+  background: var(--surface-strong);
+  color: var(--ink);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: clamp(1.45rem, 2.4vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.operator-symbol {
+  min-width: 3rem;
+  color: var(--accent-strong);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.answer-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.answer-form .answer-fieldset {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.binary-input {
+  font-family: "Cascadia Code", Consolas, monospace;
+  letter-spacing: 0;
+}
+
+.overflow-fieldset {
+  padding: 0;
+  border: 0;
+}
+
+.overflow-choice-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.practice-feedback {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.practice-feedback[hidden] {
+  display: none;
+}
+
+.feedback-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.feedback-fact {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(181, 171, 154, 0.44);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.feedback-fact span {
+  display: block;
+  color: var(--muted-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.feedback-fact strong,
+.feedback-fact code {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.feedback-fact code {
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+
+@media (max-width: 900px) {
+  .practice-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .operand-line,
+  .overflow-choice-list,
+  .feedback-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .operator-symbol {
+    min-height: 2.5rem;
+  }
+}
