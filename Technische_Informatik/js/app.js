@@ -6,11 +6,8 @@
     task: null,
     taskNumber: 0,
     attempted: 0,
-    correct: 0,
     score: 0,
-    currentTaskAttempted: false,
-    currentTaskCorrect: false,
-    currentTaskScore: 0
+    currentTaskAttempted: false
   };
   var elements = {};
 
@@ -21,6 +18,7 @@
     elements.newTaskButton = document.getElementById("new-task-button");
     elements.nextTaskButton = document.getElementById("next-task-button");
     elements.answerForm = document.getElementById("answer-form");
+    elements.submitButton = document.getElementById("submit-button");
     elements.resultInput = document.getElementById("result-input");
     elements.overflowKind = document.getElementById("overflow-kind");
     elements.feedbackPanel = document.getElementById("feedback-panel");
@@ -32,13 +30,11 @@
     elements.rightOperand = document.getElementById("right-operand");
     elements.operatorSymbol = document.getElementById("operator-symbol");
     elements.attemptedCount = document.getElementById("attempted-count");
-    elements.correctCount = document.getElementById("correct-count");
     elements.scoreCount = document.getElementById("score-count");
 
     elements.newTaskButton.addEventListener("click", createNewTask);
     elements.nextTaskButton.addEventListener("click", createNewTask);
     elements.answerForm.addEventListener("submit", handleSubmit);
-    elements.bitWidth.addEventListener("change", createNewTask);
 
     Array.prototype.slice.call(document.querySelectorAll("input[name='overflowStatus']")).forEach(function (input) {
       input.addEventListener("change", syncOverflowKindState);
@@ -57,10 +53,10 @@
     state.task = Practice.generateTask(getSettings());
     state.taskNumber += 1;
     state.currentTaskAttempted = false;
-    state.currentTaskCorrect = false;
-    state.currentTaskScore = 0;
     renderTask();
     resetAnswer();
+    setAnswerFieldsLocked(false);
+    setTaskButtonsEnabled(false);
   }
 
   function renderTask() {
@@ -121,20 +117,13 @@
     if (result.valid) {
       if (!state.currentTaskAttempted) {
         state.attempted += 1;
+        state.score += result.earnedPoints;
         state.currentTaskAttempted = true;
       }
 
-      if (result.earnedPoints > state.currentTaskScore) {
-        state.score += result.earnedPoints - state.currentTaskScore;
-        state.currentTaskScore = result.earnedPoints;
-      }
-
-      if (result.correct && !state.currentTaskCorrect) {
-        state.correct += 1;
-        state.currentTaskCorrect = true;
-      }
-
       renderStats();
+      setAnswerFieldsLocked(true);
+      setTaskButtonsEnabled(true);
     }
 
     renderFeedback(result);
@@ -146,8 +135,22 @@
 
   function renderStats() {
     elements.attemptedCount.textContent = String(state.attempted);
-    elements.correctCount.textContent = String(state.correct);
     elements.scoreCount.textContent = String(state.score);
+  }
+
+  function setTaskButtonsEnabled(isEnabled) {
+    elements.newTaskButton.disabled = !isEnabled;
+    elements.nextTaskButton.disabled = !isEnabled;
+  }
+
+  function setAnswerFieldsLocked(isLocked) {
+    elements.resultInput.disabled = isLocked;
+    elements.overflowKind.disabled = isLocked || getSelectedOverflowStatus() !== "yes";
+    elements.submitButton.disabled = isLocked;
+
+    Array.prototype.slice.call(document.querySelectorAll("input[name='overflowStatus']")).forEach(function (input) {
+      input.disabled = isLocked;
+    });
   }
 
   function hideFeedback() {
