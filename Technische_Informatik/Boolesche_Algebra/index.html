@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Boolesche Algebra Trainer</title>
+  <meta name="description" content="Interaktiver Trainer zum schrittweisen Umformen boolescher Terme.">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+
+  <header class="site-header">
+    <div class="site-shell header-grid">
+      <div>
+        <p class="eyebrow">Technische Informatik</p>
+        <h1>Boolesche Algebra Trainer</h1>
+        <p class="lead">
+          Übe das schrittweise Umformen boolescher Terme mit De Morgan,
+          Kommutativ-, Assoziativ-, Distributiv- und Komplementärgesetzen.
+        </p>
+      </div>
+
+      <nav class="level-panel" aria-label="Level-Auswahl">
+        <p class="panel-label">Level</p>
+        <div class="segmented-control" role="group" aria-label="Level auswählen">
+          <button class="level-button is-active" type="button" data-level="leicht" aria-pressed="true">Leicht</button>
+          <button class="level-button" type="button" data-level="mittel" aria-pressed="false">Mittel</button>
+          <button class="level-button" type="button" data-level="schwer" aria-pressed="false">Schwer</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main id="content" class="site-shell page-layout">
+    <section class="task-overview" aria-labelledby="overview-title">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow" id="level-kicker">Level Leicht</p>
+          <h2 id="overview-title">Aufgabenübersicht</h2>
+        </div>
+      </div>
+
+      <div class="task-list" id="task-list" aria-live="polite"></div>
+    </section>
+
+    <section class="workspace is-empty" id="workspace" aria-labelledby="workspace-title">
+      <div class="empty-state" id="empty-state">
+        <p class="eyebrow">Arbeitsbereich</p>
+        <h2 id="workspace-title">Noch keine Aufgabe ausgewählt</h2>
+        <p>Starte links in der Aufgabenübersicht. Der Term wird anschließend nur über Bausteine zusammengesetzt.</p>
+      </div>
+
+      <div class="workspace-content" id="workspace-content" hidden>
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow" id="task-kicker">Aufgabe</p>
+            <h2 id="task-title">Aufgabe bearbeiten</h2>
+          </div>
+          <span class="status-pill" id="task-status">Schritt 1</span>
+        </header>
+
+        <div class="term-grid" aria-label="Terme der Aufgabe">
+          <article class="term-card">
+            <h3>Ausgangsterm</h3>
+            <p class="formula" id="start-term"></p>
+          </article>
+          <article class="term-card">
+            <h3>Aufgabenstellung</h3>
+            <p id="task-prompt"></p>
+          </article>
+          <article class="term-card term-card-wide">
+            <h3>Aktueller Term</h3>
+            <p class="formula" id="current-term"></p>
+          </article>
+        </div>
+
+        <section class="builder-panel" aria-labelledby="builder-title">
+          <div class="builder-head">
+            <div>
+              <p class="eyebrow">Nächster Schritt</p>
+              <h3 id="builder-title">Baue den nächsten Term</h3>
+            </div>
+            <label class="law-select-label" for="law-select">
+              <span>Welches Gesetz wendest du an?</span>
+              <select id="law-select">
+                <option value="">Bitte auswählen</option>
+                <option value="demorgan">De Morgansches Gesetz</option>
+                <option value="commutative">Kommutativgesetz</option>
+                <option value="associative">Assoziativgesetz</option>
+                <option value="distributive">Distributivgesetz</option>
+                <option value="complement">Komplementärgesetz</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="entry-preview" aria-live="polite">
+            <span class="preview-label">Deine Eingabe</span>
+            <output class="formula preview-formula" id="term-preview">Noch kein Baustein gewählt</output>
+          </div>
+
+          <div class="token-bank" aria-label="Baustein-Leiste">
+            <button type="button" class="token-button" data-token="a">a</button>
+            <button type="button" class="token-button" data-token="b">b</button>
+            <button type="button" class="token-button" data-token="c">c</button>
+            <button type="button" class="token-button" data-token="0">0</button>
+            <button type="button" class="token-button" data-token="1">1</button>
+            <button type="button" class="token-button" data-token="(">(</button>
+            <button type="button" class="token-button" data-token=")">)</button>
+            <button type="button" class="token-button" data-token="¬" aria-pressed="false">NOT</button>
+            <button type="button" class="token-button" data-token="∧">AND</button>
+            <button type="button" class="token-button" data-token="∨">OR</button>
+          </div>
+
+          <div class="action-row">
+            <button class="button-secondary" type="button" id="delete-last-button">Letztes Element löschen</button>
+            <button class="button-secondary" type="button" id="clear-entry-button">Eingabe zurücksetzen</button>
+            <button class="button-primary" type="button" id="check-step-button">Schritt prüfen</button>
+            <button class="button-ghost" type="button" id="show-step-button">Nächsten Schritt anzeigen</button>
+            <button class="button-danger" type="button" id="reset-task-button">Aufgabe zurücksetzen</button>
+          </div>
+
+          <div class="feedback-panel" id="feedback-panel" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="history-panel" aria-labelledby="history-title">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">Nachvollziehen</p>
+              <h3 id="history-title">Lösungshistorie</h3>
+            </div>
+          </div>
+          <ol class="history-list" id="history-list"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell">
+      <p>&copy; 2026 Martin-Andersen-Nexö Gymnasium Dresden</p>
+    </div>
+  </footer>
+</body>
+</html>

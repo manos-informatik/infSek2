@@ -1,0 +1,966 @@
+"use strict";
+
+const LAW_LABELS = {
+  demorgan: "De Morgansches Gesetz",
+  commutative: "Kommutativgesetz",
+  associative: "Assoziativgesetz",
+  distributive: "Distributivgesetz",
+  complement: "Komplementärgesetz"
+};
+
+const STORAGE_KEY = "boolesche-algebra-trainer-progress-v2";
+
+// Alle Aufgaben liegen bewusst zentral in dieser Struktur.
+// Neue Aufgaben lassen sich pro Level über start + steps ergänzen.
+const TASKS = {
+  leicht: [
+    {
+      id: "leicht-demorgan-und",
+      title: "Aufgabe 1",
+      prompt: "Wende das De Morgansche Gesetz auf den negierten UND-Term an.",
+      start: "¬(a ∧ b)",
+      steps: [
+        { term: "¬a ∨ ¬b", law: "demorgan" }
+      ]
+    },
+    {
+      id: "leicht-komplement-und",
+      title: "Aufgabe 2",
+      prompt: "Vereinfache den Term mit dem Komplementärgesetz.",
+      start: "a ∧ ¬a",
+      steps: [
+        { term: "0", law: "complement" }
+      ]
+    },
+    {
+      id: "leicht-kommutativ-oder",
+      title: "Aufgabe 3",
+      prompt: "Vertausche die Operanden mithilfe des Kommutativgesetzes.",
+      start: "a ∨ b",
+      steps: [
+        { term: "b ∨ a", law: "commutative" }
+      ]
+    }
+  ],
+  mittel: [
+    {
+      id: "mittel-demorgan-doppelnegation",
+      title: "Aufgabe 1",
+      prompt: "Forme mit De Morgan um und vereinfache anschließend die doppelte Negation.",
+      start: "¬(a ∨ ¬b)",
+      steps: [
+        { term: "¬a ∧ ¬¬b", law: "demorgan" },
+        { term: "¬a ∧ b", law: "complement" }
+      ]
+    },
+    {
+      id: "mittel-distributiv-kurz",
+      title: "Aufgabe 2",
+      prompt: "Fasse den gemeinsamen Teil mit dem Distributivgesetz zusammen.",
+      start: "(a ∨ b) ∧ (a ∨ c)",
+      steps: [
+        { term: "a ∨ (b ∧ c)", law: "distributive" }
+      ]
+    },
+    {
+      id: "mittel-assoziativ",
+      title: "Aufgabe 3",
+      prompt: "Setze die Klammern mit dem Assoziativgesetz neu.",
+      start: "((a ∨ b) ∨ c)",
+      steps: [
+        { term: "a ∨ (b ∨ c)", law: "associative" }
+      ]
+    }
+  ],
+  schwer: [
+    {
+      id: "schwer-xor-umformung",
+      title: "Aufgabe 1",
+      prompt: "Forme den Term in mehreren Schritten mit Distributiv-, Komplementär- und De-Morgan-Gesetz um.",
+      start: "(¬a ∧ b) ∨ (a ∧ ¬b)",
+      steps: [
+        { term: "((¬a ∧ b) ∨ a) ∧ ((¬a ∧ b) ∨ ¬b)", law: "distributive" },
+        { term: "((a ∨ ¬a) ∧ (a ∨ b)) ∧ ((¬a ∨ ¬b) ∧ (b ∨ ¬b))", law: "distributive" },
+        { term: "(a ∨ b) ∧ (¬a ∨ ¬b)", law: "complement" },
+        { term: "(a ∨ b) ∧ ¬(a ∧ b)", law: "demorgan" }
+      ]
+    },
+    {
+      id: "schwer-ausklammern-komplement",
+      title: "Aufgabe 2",
+      prompt: "Klammere aus und nutze anschließend das Komplementärgesetz.",
+      start: "(a ∧ b) ∨ (a ∧ ¬b)",
+      steps: [
+        { term: "a ∧ (b ∨ ¬b)", law: "distributive" },
+        { term: "a ∧ 1", law: "complement" },
+        { term: "a", law: "complement" }
+      ]
+    },
+    {
+      id: "schwer-ausmultiplizieren-komplement",
+      title: "Aufgabe 3",
+      prompt: "Wende das Distributivgesetz an und vereinfache den entstehenden Komplementärterm.",
+      start: "(a ∨ ¬b) ∧ b",
+      steps: [
+        { term: "(a ∧ b) ∨ (¬b ∧ b)", law: "distributive" },
+        { term: "(a ∧ b) ∨ 0", law: "complement" },
+        { term: "a ∧ b", law: "complement" }
+      ]
+    }
+  ]
+};
+
+// Flacher UI-Zustand: Die Lösung selbst bleibt in TASKS, hier steht nur der aktuelle Fortschritt.
+const state = {
+  level: "leicht",
+  taskIndex: null,
+  stepIndex: 0,
+  currentTerm: "",
+  entryTokens: [],
+  negationMode: false,
+  completedTasks: new Set(),
+  progress: loadSavedProgress()
+};
+
+const elements = {};
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindElements();
+  bindEvents();
+  restoreCompletedTasks();
+  renderLevel();
+  renderTaskOverview();
+  renderEmptyWorkspace();
+});
+
+function bindElements() {
+  elements.levelButtons = Array.from(document.querySelectorAll(".level-button"));
+  elements.levelKicker = document.querySelector("#level-kicker");
+  elements.taskList = document.querySelector("#task-list");
+  elements.workspace = document.querySelector("#workspace");
+  elements.emptyState = document.querySelector("#empty-state");
+  elements.workspaceContent = document.querySelector("#workspace-content");
+  elements.taskKicker = document.querySelector("#task-kicker");
+  elements.taskTitle = document.querySelector("#task-title");
+  elements.taskStatus = document.querySelector("#task-status");
+  elements.startTerm = document.querySelector("#start-term");
+  elements.taskPrompt = document.querySelector("#task-prompt");
+  elements.currentTerm = document.querySelector("#current-term");
+  elements.lawSelect = document.querySelector("#law-select");
+  elements.termPreview = document.querySelector("#term-preview");
+  elements.tokenButtons = Array.from(document.querySelectorAll(".token-button"));
+  elements.negationButton = document.querySelector('[data-token="¬"]');
+  elements.deleteLastButton = document.querySelector("#delete-last-button");
+  elements.clearEntryButton = document.querySelector("#clear-entry-button");
+  elements.checkStepButton = document.querySelector("#check-step-button");
+  elements.showStepButton = document.querySelector("#show-step-button");
+  elements.resetTaskButton = document.querySelector("#reset-task-button");
+  elements.feedbackPanel = document.querySelector("#feedback-panel");
+  elements.historyList = document.querySelector("#history-list");
+}
+
+function bindEvents() {
+  elements.levelButtons.forEach((button) => {
+    button.addEventListener("click", () => selectLevel(button.dataset.level));
+  });
+
+  elements.taskList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-task-index]");
+    if (!button) {
+      return;
+    }
+    openTask(Number(button.dataset.taskIndex));
+  });
+
+  elements.tokenButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.token === "¬") {
+        toggleNegationMode();
+        return;
+      }
+      state.entryTokens.push({
+        value: button.dataset.token,
+        negated: state.negationMode
+      });
+      renderEntry();
+    });
+  });
+
+  elements.deleteLastButton.addEventListener("click", () => {
+    state.entryTokens.pop();
+    renderEntry();
+  });
+
+  elements.clearEntryButton.addEventListener("click", () => {
+    clearEntry();
+    setFeedback("info", "Eingabe zurückgesetzt", "Baue den nächsten Term erneut aus den Bausteinen auf.");
+  });
+
+  elements.checkStepButton.addEventListener("click", checkStep);
+  elements.showStepButton.addEventListener("click", showNextStep);
+  elements.resetTaskButton.addEventListener("click", resetCurrentTask);
+}
+
+function selectLevel(level) {
+  state.level = level;
+  state.taskIndex = null;
+  state.stepIndex = 0;
+  state.currentTerm = "";
+  state.entryTokens = [];
+  state.negationMode = false;
+  renderLevel();
+  renderNegationMode();
+  renderTaskOverview();
+  renderEmptyWorkspace();
+}
+
+function renderLevel() {
+  elements.levelButtons.forEach((button) => {
+    const isActive = button.dataset.level === state.level;
+    const isComplete = isLevelComplete(button.dataset.level);
+    button.classList.toggle("is-active", isActive);
+    button.classList.toggle("is-complete", isComplete);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+  elements.levelKicker.textContent = `Level ${capitalize(state.level)}`;
+}
+
+function renderTaskOverview() {
+  const tasks = TASKS[state.level];
+  elements.taskList.innerHTML = "";
+
+  tasks.forEach((task, index) => {
+    const taskId = getTaskId(state.level, index);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "task-card-button";
+    button.dataset.taskIndex = String(index);
+    button.classList.toggle("is-active", state.taskIndex === index);
+    button.classList.toggle("is-complete", state.completedTasks.has(taskId));
+    button.setAttribute("aria-label", `${task.title} öffnen, Startterm ${task.start}`);
+
+    const topLine = document.createElement("span");
+    topLine.className = "task-card-top";
+
+    const title = document.createElement("span");
+    title.className = "task-card-title";
+    title.textContent = task.title;
+
+    const meta = document.createElement("span");
+    meta.className = "task-card-meta";
+    meta.textContent = state.completedTasks.has(taskId) ? "gelöst" : `${task.steps.length} Schritt${task.steps.length === 1 ? "" : "e"}`;
+
+    const formula = document.createElement("span");
+    formula.className = "formula";
+    renderFormula(formula, task.start);
+
+    topLine.append(title, meta);
+    button.append(topLine, formula);
+    elements.taskList.append(button);
+  });
+}
+
+function renderEmptyWorkspace() {
+  elements.workspace.classList.add("is-empty");
+  elements.emptyState.hidden = false;
+  elements.workspaceContent.hidden = true;
+}
+
+function openTask(index) {
+  const task = TASKS[state.level][index];
+  const savedProgress = getTaskProgress(state.level, index);
+  state.taskIndex = index;
+  state.stepIndex = clampStepIndex(task, savedProgress ? savedProgress.stepIndex : 0);
+  state.currentTerm = getTermAtStep(task, state.stepIndex);
+  state.entryTokens = [];
+  state.negationMode = false;
+
+  elements.workspace.classList.remove("is-empty");
+  elements.emptyState.hidden = true;
+  elements.workspaceContent.hidden = false;
+  elements.taskKicker.textContent = `Level ${capitalize(state.level)}`;
+  elements.taskTitle.textContent = task.title;
+  elements.taskPrompt.textContent = task.prompt || "Forme den Ausgangsterm schrittweise um und gib jeden Zwischenterm über die Bausteine ein.";
+  renderFormula(elements.startTerm, task.start);
+  renderFormula(elements.currentTerm, state.currentTerm);
+  elements.lawSelect.value = "";
+  elements.feedbackPanel.innerHTML = "";
+
+  renderTaskOverview();
+  renderEntry();
+  renderNegationMode();
+  renderHistory();
+  renderProgress();
+
+  if (state.stepIndex >= task.steps.length) {
+    setFeedback("success", "Aufgabe bereits gelöst", "Die gespeicherte Lösungshistorie ist unten sichtbar.");
+  }
+}
+
+function resetCurrentTask() {
+  if (!hasActiveTask()) {
+    return;
+  }
+  const task = getCurrentTask();
+  const taskId = getTaskId(state.level, state.taskIndex);
+  delete state.progress[taskId];
+  state.completedTasks.delete(taskId);
+  persistProgress();
+
+  state.stepIndex = 0;
+  state.currentTerm = task.start;
+  state.entryTokens = [];
+  state.negationMode = false;
+  elements.lawSelect.value = "";
+  renderFormula(elements.currentTerm, task.start);
+  renderEntry();
+  renderNegationMode();
+  renderHistory();
+  renderProgress();
+  renderTaskOverview();
+  renderLevel();
+  setFeedback("info", "Aufgabe zurückgesetzt", "Du beginnst wieder beim Ausgangsterm.");
+}
+
+function clearEntry() {
+  state.entryTokens = [];
+  state.negationMode = false;
+  renderEntry();
+  renderNegationMode();
+}
+
+function toggleNegationMode() {
+  state.negationMode = !state.negationMode;
+  renderNegationMode();
+}
+
+function renderNegationMode() {
+  if (!elements.negationButton) {
+    return;
+  }
+
+  elements.negationButton.classList.toggle("is-active", state.negationMode);
+  elements.negationButton.setAttribute("aria-pressed", String(state.negationMode));
+}
+
+function renderEntry() {
+  const value = formatTokens(state.entryTokens);
+  elements.termPreview.classList.toggle("is-empty", !value);
+  renderFormula(elements.termPreview, value, "Noch kein Baustein gewählt");
+}
+
+function renderProgress() {
+  const task = getCurrentTask();
+  const isComplete = state.stepIndex >= task.steps.length;
+  elements.taskStatus.textContent = isComplete ? "Aufgabe gelöst" : `Schritt ${state.stepIndex + 1} von ${task.steps.length}`;
+  elements.taskStatus.classList.toggle("is-complete", isComplete);
+  elements.checkStepButton.disabled = isComplete;
+  elements.showStepButton.disabled = isComplete;
+}
+
+function renderHistory() {
+  const task = getCurrentTask();
+  const savedProgress = getTaskProgress(state.level, state.taskIndex);
+  const savedHistory = savedProgress && savedProgress.stepIndex === state.stepIndex && Array.isArray(savedProgress.history)
+    ? savedProgress.history
+    : null;
+  const history = savedHistory || buildHistoryForStep(task, state.stepIndex);
+
+  elements.historyList.innerHTML = "";
+  history.forEach((entry, index) => {
+    const isStart = entry.isStart || index === 0;
+    const lawText = entry.law ? `Verwendetes Gesetz: ${LAW_LABELS[entry.law]}` : "";
+    addHistoryItem(isStart ? "Ausgang" : "", entry.term, lawText, isStart);
+  });
+}
+
+function addHistoryItem(label, term, lawText, isStart) {
+  const item = document.createElement("li");
+  item.className = "history-item";
+  item.classList.toggle("is-start", isStart);
+
+  const labelElement = document.createElement("span");
+  labelElement.className = "history-label";
+  labelElement.textContent = label;
+
+  const termElement = document.createElement("span");
+  termElement.className = "formula";
+  renderFormula(termElement, term);
+
+  item.append(labelElement, termElement);
+
+  if (lawText) {
+    const lawElement = document.createElement("span");
+    lawElement.className = "history-law";
+    lawElement.textContent = lawText;
+    item.append(lawElement);
+  }
+
+  elements.historyList.append(item);
+}
+
+function checkStep() {
+  if (!hasActiveTask()) {
+    return;
+  }
+
+  const task = getCurrentTask();
+  const expected = task.steps[state.stepIndex];
+  const entry = formatTokens(state.entryTokens);
+  const selectedLaw = elements.lawSelect.value;
+
+  if (!entry) {
+    setFeedback("warning", "Noch kein Term eingegeben", "Wähle Bausteine aus der Leiste, um den nächsten Term zu erstellen.");
+    return;
+  }
+
+  if (!selectedLaw) {
+    setFeedback("warning", "Gesetz fehlt", "Wähle zuerst aus, welches Gesetz du in diesem Schritt anwendest.");
+    return;
+  }
+
+  // Hauptvalidierung: exakt der nächste vorgegebene Lösungsschritt und das passende Gesetz.
+  const termMatches = normalizeTerm(entry) === normalizeTerm(expected.term);
+  const lawMatches = selectedLaw === expected.law;
+
+  if (termMatches && lawMatches) {
+    state.stepIndex += 1;
+    state.currentTerm = expected.term;
+    renderFormula(elements.currentTerm, expected.term);
+    elements.lawSelect.value = "";
+    clearEntry();
+    saveCurrentProgress();
+    renderHistory();
+    renderProgress();
+
+    if (state.stepIndex >= task.steps.length) {
+      state.completedTasks.add(getTaskId(state.level, state.taskIndex));
+      renderLevel();
+      renderTaskOverview();
+      setFeedback("success", "Aufgabe gelöst", "Sehr gut. Alle vorgegebenen Lösungsschritte wurden korrekt durchgeführt.");
+    } else {
+      setFeedback("success", "Richtiger Schritt", "Der Term und das gewählte Gesetz passen. Baue nun den nächsten Schritt.");
+    }
+    return;
+  }
+
+  if (termMatches && !lawMatches) {
+    setFeedback("warning", "Term stimmt, Gesetz noch nicht", "Der eingegebene Term ist der erwartete nächste Schritt. Prüfe noch einmal das ausgewählte Gesetz.");
+    return;
+  }
+
+  if (!termMatches && lawMatches) {
+    const equivalenceHint = buildEquivalenceHint(state.currentTerm, entry);
+    setFeedback("error", "Term noch nicht passend", `Das Gesetz passt, aber der nächste Term entspricht noch nicht dem erwarteten Lösungspfad. Prüfe besonders Klammern und Negationen.${equivalenceHint}`);
+    return;
+  }
+
+  const equivalenceHint = buildEquivalenceHint(state.currentTerm, entry);
+  setFeedback("error", "Noch nicht richtig", `Term und Gesetz passen noch nicht zum nächsten Lösungsschritt. Überlege, welche Umformungsregel direkt auf den aktuellen Term passt.${equivalenceHint}`);
+}
+
+function showNextStep() {
+  if (!hasActiveTask()) {
+    return;
+  }
+
+  const task = getCurrentTask();
+  const expected = task.steps[state.stepIndex];
+  if (!expected) {
+    setFeedback("success", "Keine weiteren Schritte", "Diese Aufgabe ist bereits vollständig gelöst.");
+    return;
+  }
+
+  setFeedback(
+    "info",
+    "Nächster Lösungsschritt",
+    `Baue diesen Term nach und wähle das passende Gesetz aus.`,
+    expected.term,
+    LAW_LABELS[expected.law]
+  );
+}
+
+function setFeedback(type, title, text, term = "", law = "") {
+  const message = document.createElement("div");
+  message.className = `feedback-message is-${type}`;
+
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = text;
+
+  message.append(strong, paragraph);
+
+  if (term) {
+    const termElement = document.createElement("span");
+    termElement.className = "formula feedback-term";
+    renderFormula(termElement, term);
+    message.append(termElement);
+  }
+
+  if (law) {
+    const lawElement = document.createElement("span");
+    lawElement.className = "history-law";
+    lawElement.textContent = `Verwendetes Gesetz: ${law}`;
+    message.append(lawElement);
+  }
+
+  elements.feedbackPanel.innerHTML = "";
+  elements.feedbackPanel.append(message);
+}
+
+function buildEquivalenceHint(leftTerm, rightTerm) {
+  const equivalent = areEquivalent(leftTerm, rightTerm);
+  if (equivalent === true) {
+    return " Dein Term ist logisch äquivalent zum aktuellen Term, folgt hier aber nicht dem vorgegebenen nächsten Lösungsschritt.";
+  }
+  return "";
+}
+
+function hasActiveTask() {
+  return state.taskIndex !== null;
+}
+
+function getCurrentTask() {
+  return TASKS[state.level][state.taskIndex];
+}
+
+function getTaskId(level, index) {
+  return TASKS[level][index].id || `${level}-${index}`;
+}
+
+function isLevelComplete(level) {
+  return TASKS[level].every((task, index) => state.completedTasks.has(getTaskId(level, index)));
+}
+
+function getTaskProgress(level, index) {
+  return state.progress[getTaskId(level, index)] || null;
+}
+
+function restoreCompletedTasks() {
+  Object.keys(TASKS).forEach((level) => {
+    TASKS[level].forEach((task, index) => {
+      const taskId = getTaskId(level, index);
+      const progress = state.progress[taskId];
+      if (progress && clampStepIndex(task, progress.stepIndex) >= task.steps.length) {
+        state.completedTasks.add(taskId);
+      }
+    });
+  });
+}
+
+function saveCurrentProgress() {
+  if (!hasActiveTask()) {
+    return;
+  }
+
+  const task = getCurrentTask();
+  const taskId = getTaskId(state.level, state.taskIndex);
+  const completed = state.stepIndex >= task.steps.length;
+
+  state.progress[taskId] = {
+    level: state.level,
+    taskIndex: state.taskIndex,
+    stepIndex: state.stepIndex,
+    currentTerm: state.currentTerm,
+    completed,
+    history: buildHistoryForStep(task, state.stepIndex)
+  };
+
+  if (completed) {
+    state.completedTasks.add(taskId);
+  }
+
+  persistProgress();
+}
+
+function loadSavedProgress() {
+  try {
+    if (typeof localStorage === "undefined") {
+      return {};
+    }
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function persistProgress() {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
+    }
+  } catch (error) {
+    // Ohne lokalen Speicher funktioniert die Seite weiterhin in der aktuellen Sitzung.
+  }
+}
+
+function buildHistoryForStep(task, stepIndex) {
+  const history = [{ term: task.start, law: "", isStart: true }];
+  task.steps.slice(0, stepIndex).forEach((step) => {
+    history.push({ term: step.term, law: step.law, isStart: false });
+  });
+  return history;
+}
+
+function clampStepIndex(task, stepIndex) {
+  const numericStep = Number(stepIndex);
+  if (!Number.isFinite(numericStep)) {
+    return 0;
+  }
+  return Math.min(Math.max(0, numericStep), task.steps.length);
+}
+
+function getTermAtStep(task, stepIndex) {
+  if (stepIndex <= 0) {
+    return task.start;
+  }
+  return task.steps[stepIndex - 1].term;
+}
+
+function capitalize(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function renderFormula(element, term, emptyText = "") {
+  if (!term) {
+    element.textContent = emptyText;
+    element.removeAttribute("aria-label");
+    return;
+  }
+
+  element.innerHTML = formulaToHtml(term);
+  element.setAttribute("aria-label", termToAccessibleText(term));
+}
+
+function formulaToHtml(term) {
+  const displayTerm = String(term)
+    .replace(/AND/gi, "∧")
+    .replace(/OR/gi, "∨")
+    .replace(/NOT/gi, "¬")
+    .replace(/!/g, "¬");
+
+  return renderFormulaRange(displayTerm, 0, displayTerm.length).html;
+}
+
+function renderFormulaRange(term, start, end) {
+  let html = "";
+  let index = start;
+
+  while (index < end) {
+    const character = term[index];
+    if (character === "¬") {
+      const negated = renderNegatedFactor(term, index + 1, end);
+      html += `<span class="not-overline">${negated.html}</span>`;
+      index = negated.nextIndex;
+      continue;
+    }
+
+    html += escapeHtml(character);
+    index += 1;
+  }
+
+  return { html, nextIndex: index };
+}
+
+function renderNegatedFactor(term, start, end) {
+  let index = start;
+  while (index < end && /\s/.test(term[index])) {
+    index += 1;
+  }
+
+  if (index >= end) {
+    return { html: "", nextIndex: index };
+  }
+
+  if (term[index] === "¬") {
+    const nested = renderNegatedFactor(term, index + 1, end);
+    return {
+      html: `<span class="not-overline">${nested.html}</span>`,
+      nextIndex: nested.nextIndex
+    };
+  }
+
+  if (term[index] === "(") {
+    const closingIndex = findMatchingParen(term, index, end);
+    if (closingIndex !== -1) {
+      return {
+        html: renderFormulaRange(term, index, closingIndex + 1).html,
+        nextIndex: closingIndex + 1
+      };
+    }
+  }
+
+  return {
+    html: escapeHtml(term[index]),
+    nextIndex: index + 1
+  };
+}
+
+function findMatchingParen(term, openIndex, end) {
+  let depth = 0;
+  for (let index = openIndex; index < end; index += 1) {
+    if (term[index] === "(") {
+      depth += 1;
+    }
+    if (term[index] === ")") {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+  return -1;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function termToAccessibleText(term) {
+  return String(term)
+    .replace(/¬/g, "nicht ")
+    .replace(/∧/g, " und ")
+    .replace(/∨/g, " oder ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeTerm(term) {
+  // Leerzeichen und einfache Texteingabe-Varianten sollen beim Vergleich keine Rolle spielen.
+  const normalized = term
+    .normalize("NFKC")
+    .replace(/\s+/g, "")
+    .replace(/AND/gi, "∧")
+    .replace(/OR/gi, "∨")
+    .replace(/NOT/gi, "¬")
+    .replace(/!/g, "¬");
+
+  return stripRedundantOuterParens(normalized);
+}
+
+function stripRedundantOuterParens(term) {
+  let current = term;
+  while (hasRedundantOuterParens(current)) {
+    current = current.slice(1, -1);
+  }
+  return current;
+}
+
+function hasRedundantOuterParens(term) {
+  if (term.length < 2 || term[0] !== "(" || term[term.length - 1] !== ")") {
+    return false;
+  }
+
+  let depth = 0;
+  for (let index = 0; index < term.length; index += 1) {
+    if (term[index] === "(") {
+      depth += 1;
+    } else if (term[index] === ")") {
+      depth -= 1;
+    }
+
+    if (depth === 0 && index < term.length - 1) {
+      return false;
+    }
+
+    if (depth < 0) {
+      return false;
+    }
+  }
+
+  return depth === 0;
+}
+
+function formatTokens(tokens) {
+  const parts = [];
+  let index = 0;
+
+  while (index < tokens.length) {
+    const token = normalizeEntryToken(tokens[index]);
+    if (token.negated) {
+      const run = [];
+      while (index < tokens.length && normalizeEntryToken(tokens[index]).negated) {
+        run.push(normalizeEntryToken(tokens[index]).value);
+        index += 1;
+      }
+      parts.push(formatNegatedRun(run));
+      continue;
+    }
+
+    parts.push(token.value);
+    index += 1;
+  }
+
+  return formatPlainTokens(parts);
+}
+
+function normalizeEntryToken(token) {
+  if (typeof token === "string") {
+    return { value: token, negated: false };
+  }
+  return {
+    value: token.value,
+    negated: Boolean(token.negated)
+  };
+}
+
+function formatNegatedRun(tokens) {
+  const term = formatPlainTokens(tokens);
+  if (!term) {
+    return "";
+  }
+
+  const compactTerm = term.replace(/\s+/g, "");
+  if (tokens.length === 1 || hasRedundantOuterParens(compactTerm)) {
+    return `¬${term}`;
+  }
+
+  return `¬(${term})`;
+}
+
+function formatPlainTokens(tokens) {
+  return tokens
+    .map((token) => (token === "∧" || token === "∨" ? ` ${token} ` : token))
+    .join("")
+    .replace(/\s+/g, " ")
+    .replace(/\(\s/g, "(")
+    .replace(/\s\)/g, ")")
+    .trim();
+}
+
+function areEquivalent(leftTerm, rightTerm) {
+  // Ergänzende Prüfung: Wahrheitstafel über a, b und c. Sie ersetzt nicht den Lösungspfad.
+  try {
+    const leftAst = parseBooleanTerm(leftTerm);
+    const rightAst = parseBooleanTerm(rightTerm);
+    const assignments = [
+      { a: false, b: false, c: false },
+      { a: false, b: false, c: true },
+      { a: false, b: true, c: false },
+      { a: false, b: true, c: true },
+      { a: true, b: false, c: false },
+      { a: true, b: false, c: true },
+      { a: true, b: true, c: false },
+      { a: true, b: true, c: true }
+    ];
+
+    return assignments.every((assignment) => evaluateAst(leftAst, assignment) === evaluateAst(rightAst, assignment));
+  } catch (error) {
+    return null;
+  }
+}
+
+function parseBooleanTerm(term) {
+  // Kleiner rekursiver Parser mit der üblichen Bindung: ¬ vor ∧ vor ∨.
+  const tokens = tokenizeTerm(term);
+  let position = 0;
+
+  function peek() {
+    return tokens[position];
+  }
+
+  function consume(expected) {
+    const token = tokens[position];
+    if (expected && token !== expected) {
+      throw new Error(`Expected ${expected}, found ${token}`);
+    }
+    position += 1;
+    return token;
+  }
+
+  function parseExpression() {
+    return parseOr();
+  }
+
+  function parseOr() {
+    let node = parseAnd();
+    while (peek() === "∨") {
+      consume("∨");
+      node = { type: "or", left: node, right: parseAnd() };
+    }
+    return node;
+  }
+
+  function parseAnd() {
+    let node = parseUnary();
+    while (peek() === "∧") {
+      consume("∧");
+      node = { type: "and", left: node, right: parseUnary() };
+    }
+    return node;
+  }
+
+  function parseUnary() {
+    if (peek() === "¬") {
+      consume("¬");
+      return { type: "not", value: parseUnary() };
+    }
+    return parseAtom();
+  }
+
+  function parseAtom() {
+    const token = peek();
+    if (token === "(") {
+      consume("(");
+      const node = parseExpression();
+      consume(")");
+      return node;
+    }
+    if (token === "a" || token === "b" || token === "c") {
+      consume();
+      return { type: "variable", name: token };
+    }
+    if (token === "0" || token === "1") {
+      consume();
+      return { type: "constant", value: token === "1" };
+    }
+    throw new Error(`Unexpected token ${token}`);
+  }
+
+  const ast = parseExpression();
+  if (position !== tokens.length) {
+    throw new Error("Unexpected trailing tokens");
+  }
+  return ast;
+}
+
+function tokenizeTerm(term) {
+  const normalized = normalizeTerm(term);
+  const tokens = [];
+
+  for (let index = 0; index < normalized.length; index += 1) {
+    const character = normalized[index];
+    if ("abc01()¬∧∨".includes(character)) {
+      tokens.push(character);
+      continue;
+    }
+    throw new Error(`Invalid character ${character}`);
+  }
+
+  return tokens;
+}
+
+function evaluateAst(node, assignment) {
+  switch (node.type) {
+    case "variable":
+      return assignment[node.name];
+    case "constant":
+      return node.value;
+    case "not":
+      return !evaluateAst(node.value, assignment);
+    case "and":
+      return evaluateAst(node.left, assignment) && evaluateAst(node.right, assignment);
+    case "or":
+      return evaluateAst(node.left, assignment) || evaluateAst(node.right, assignment);
+    default:
+      throw new Error(`Unknown node type ${node.type}`);
+  }
+}
