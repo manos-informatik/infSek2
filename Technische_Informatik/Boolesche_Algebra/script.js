@@ -8,7 +8,10 @@ const LAW_LABELS = {
   complement: "Komplementärgesetz"
 };
 
+const APP_ID = "boolesche-algebra-trainer";
+const PROGRESS_VERSION = 2;
 const STORAGE_KEY = "boolesche-algebra-trainer-progress-v2";
+const COOKIE_KEY = "boolesche_algebra_trainer_progress";
 
 // Alle Aufgaben liegen bewusst zentral in dieser Struktur.
 // Neue Aufgaben lassen sich pro Level über start + steps ergänzen.
@@ -135,6 +138,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function bindElements() {
   elements.levelButtons = Array.from(document.querySelectorAll(".level-button"));
+  elements.saveProgressButton = document.querySelector("#save-progress-button");
+  elements.loadProgressButton = document.querySelector("#load-progress-button");
+  elements.loadProgressFile = document.querySelector("#load-progress-file");
+  elements.progressMessage = document.querySelector("#progress-message");
   elements.levelKicker = document.querySelector("#level-kicker");
   elements.taskList = document.querySelector("#task-list");
   elements.workspace = document.querySelector("#workspace");
@@ -163,6 +170,18 @@ function bindEvents() {
   elements.levelButtons.forEach((button) => {
     button.addEventListener("click", () => selectLevel(button.dataset.level));
   });
+
+  if (elements.saveProgressButton) {
+    elements.saveProgressButton.addEventListener("click", exportProgressJson);
+  }
+
+  if (elements.loadProgressButton && elements.loadProgressFile) {
+    elements.loadProgressButton.addEventListener("click", () => {
+      elements.loadProgressFile.click();
+    });
+
+    elements.loadProgressFile.addEventListener("change", importProgressJson);
+  }
 
   elements.taskList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-task-index]");
@@ -199,6 +218,66 @@ function bindEvents() {
   elements.checkStepButton.addEventListener("click", checkStep);
   elements.showStepButton.addEventListener("click", showNextStep);
   elements.resetTaskButton.addEventListener("click", resetCurrentTask);
+}
+
+function exportProgressJson() {
+  const payload = createProgressPayload();
+  const formatted = `${JSON.stringify(payload, null, 2)}\n`;
+  const blob = new Blob([formatted], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `boolesche-algebra-fortschritt-${dateStamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+
+  setProgressMessage("Fortschritt wurde als JSON gespeichert.");
+}
+
+async function importProgressJson(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) {
+    return;
+  }
+
+  try {
+    const content = await file.text();
+    const data = JSON.parse(content);
+    const importedProgress = normalizeProgressMap(readProgressMapFromPayload(data));
+    applyImportedProgress(importedProgress);
+    setProgressMessage("Fortschritt aus JSON geladen.");
+  } catch (error) {
+    setProgressMessage("Datei konnte nicht geladen werden. Bitte gültige JSON-Datei wählen.", true);
+  } finally {
+    elements.loadProgressFile.value = "";
+  }
+}
+
+function applyImportedProgress(progress) {
+  state.progress = progress;
+  state.completedTasks = new Set();
+  restoreCompletedTasks();
+  persistProgress();
+  renderLevel();
+  renderTaskOverview();
+
+  if (hasActiveTask()) {
+    openTask(state.taskIndex);
+  }
+}
+
+function setProgressMessage(text, isError = false) {
+  if (!elements.progressMessage) {
+    return;
+  }
+
+  elements.progressMessage.textContent = text;
+  elements.progressMessage.classList.toggle("is-error", isError);
+  elements.progressMessage.classList.toggle("is-success", !isError && Boolean(text));
 }
 
 function selectLevel(level) {
@@ -576,25 +655,153 @@ function saveCurrentProgress() {
 }
 
 function loadSavedProgress() {
-  try {
-    if (typeof localStorage === "undefined") {
-      return {};
-    }
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch (error) {
-    return {};
-  }
+  const payload = readLocalStoragePayload() || readCookiePayload();
+  return normalizeProgressMap(readProgressMapFromPayload(payload));
 }
 
 function persistProgress() {
+  const payload = createProgressPayload();
+
   try {
     if (typeof localStorage !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
   } catch (error) {
     // Ohne lokalen Speicher funktioniert die Seite weiterhin in der aktuellen Sitzung.
   }
+
+  writeCookiePayload(payload);
+}
+
+function createProgressPayload() {
+  const progress = normalizeProgressMap(state.progress);
+  state.progress = progress;
+
+  return {
+    app: APP_ID,
+    version: PROGRESS_VERSION,
+    savedAt: new Date().toISOString(),
+    completedTaskIds: Object.keys(progress).filter((taskId) => progress[taskId].completed),
+    progress
+  };
+}
+
+function readLocalStoragePayload() {
+  try {
+    if (typeof localStorage === "undefined") {
+      return null;
+    }
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function readCookiePayload() {
+  try {
+    if (typeof document === "undefined" || !document.cookie) {
+      return null;
+    }
+
+    const cookie = document.cookie
+      .split(";")
+      .map((entry) => entry.trim())
+      .find((entry) => entry.startsWith(`${COOKIE_KEY}=`));
+
+    if (!cookie) {
+      return null;
+    }
+
+    return JSON.parse(decodeURIComponent(cookie.slice(COOKIE_KEY.length + 1)));
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeCookiePayload(payload) {
+  try {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const value = encodeURIComponent(JSON.stringify(payload));
+    document.cookie = `${COOKIE_KEY}=${value}; max-age=31536000; path=/; SameSite=Lax`;
+  } catch (error) {
+    // Cookies können je nach Browser-/Datei-Kontext blockiert sein; localStorage bleibt maßgeblich.
+  }
+}
+
+function readProgressMapFromPayload(payload) {
+  if (!payload || typeof payload !== "object") {
+    return {};
+  }
+
+  if (payload.progress && typeof payload.progress === "object") {
+    return payload.progress;
+  }
+
+  // Abwärtskompatibel zu älteren Speicherständen, die direkt die Aufgaben-Map enthielten.
+  return payload;
+}
+
+function normalizeProgressMap(rawProgress) {
+  const normalized = {};
+
+  Object.keys(TASKS).forEach((level) => {
+    TASKS[level].forEach((task, index) => {
+      const taskId = getTaskId(level, index);
+      const rawTaskProgress = rawProgress && typeof rawProgress === "object" ? rawProgress[taskId] : null;
+      if (!rawTaskProgress || typeof rawTaskProgress !== "object") {
+        return;
+      }
+
+      const stepIndex = clampStepIndex(task, rawTaskProgress.stepIndex);
+      if (stepIndex <= 0) {
+        return;
+      }
+
+      const history = normalizeHistory(rawTaskProgress.history, task, stepIndex);
+      normalized[taskId] = {
+        level,
+        taskIndex: index,
+        stepIndex,
+        currentTerm: getTermAtStep(task, stepIndex),
+        completed: stepIndex >= task.steps.length,
+        history
+      };
+    });
+  });
+
+  return normalized;
+}
+
+function normalizeHistory(rawHistory, task, stepIndex) {
+  if (!Array.isArray(rawHistory)) {
+    return buildHistoryForStep(task, stepIndex);
+  }
+
+  const expectedHistory = buildHistoryForStep(task, stepIndex);
+  const cleaned = rawHistory
+    .slice(0, expectedHistory.length)
+    .map((entry, index) => {
+      const expected = expectedHistory[index];
+      if (!entry || typeof entry !== "object") {
+        return expected;
+      }
+
+      return {
+        term: typeof entry.term === "string" ? entry.term : expected.term,
+        law: typeof entry.law === "string" ? entry.law : expected.law,
+        isStart: Boolean(entry.isStart || index === 0)
+      };
+    });
+
+  while (cleaned.length < expectedHistory.length) {
+    cleaned.push(expectedHistory[cleaned.length]);
+  }
+
+  return cleaned;
 }
 
 function buildHistoryForStep(task, stepIndex) {

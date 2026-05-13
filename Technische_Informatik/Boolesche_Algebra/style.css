@@ -168,6 +168,46 @@ p {
   gap: 0.4rem;
 }
 
+.progress-toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.progress-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.55rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(49, 92, 118, 0.24);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--accent-strong);
+  font-weight: 850;
+}
+
+.progress-btn:hover {
+  border-color: rgba(49, 92, 118, 0.46);
+  background: var(--accent-soft);
+}
+
+.progress-message {
+  grid-column: 1 / -1;
+  min-height: 1.25rem;
+  color: var(--muted-strong);
+  font-size: 0.9rem;
+}
+
+.progress-message.is-error {
+  color: var(--danger);
+}
+
+.progress-message.is-success {
+  color: var(--success);
+}
+
 .level-button {
   min-height: 2.65rem;
   padding: 0.55rem 0.8rem;
@@ -644,6 +684,7 @@ select {
   }
 
   .segmented-control,
+  .progress-toolbar,
   .term-grid {
     grid-template-columns: 1fr;
   }

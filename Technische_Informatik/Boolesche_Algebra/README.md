@@ -15,7 +15,9 @@ Die Seite besteht nur aus HTML, CSS und JavaScript. Es gibt keinen Build-Prozess
 
 Der Baustein `NOT` schaltet einen Negationsmodus ein. Alle danach gewählten Bausteine werden negiert, bis `NOT` erneut gedrückt wird. Nach jedem korrekten Schritt wird die Lösungshistorie erweitert. Über „Nächsten Schritt anzeigen“ kann ein Hilfeschritt eingeblendet werden.
 
-Gelöste Aufgaben und ihre Lösungshistorie werden im lokalen Browser-Speicher (`localStorage`) gesichert. Dadurch bleiben sie beim erneuten Öffnen der Seite auf demselben Gerät erhalten.
+Gelöste Aufgaben und ihre Lösungshistorie werden im lokalen Browser-Speicher (`localStorage`) und zusätzlich in einem Cookie gesichert. Dadurch bleiben sie beim Neuladen der Seite oder nach dem Schließen eines Tabs auf demselben Gerät erhalten.
+
+Über „Fortschritt speichern“ kann der aktuelle Stand als JSON-Datei exportiert werden. „Fortschritt laden“ importiert eine solche JSON-Datei wieder. Der Export enthält die gelösten Aufgaben, den aktuellen Schritt und die vollständige Lösungshistorie.
 
 ## Veröffentlichung über GitHub Pages
 

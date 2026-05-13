@@ -29,6 +29,12 @@
           <button class="level-button" type="button" data-level="mittel" aria-pressed="false">Mittel</button>
           <button class="level-button" type="button" data-level="schwer" aria-pressed="false">Schwer</button>
         </div>
+        <div class="progress-toolbar" aria-label="Fortschritt Aktionen">
+          <button class="progress-btn" id="save-progress-button" type="button">Fortschritt speichern ↑</button>
+          <button class="progress-btn" id="load-progress-button" type="button">Fortschritt laden ↓</button>
+          <input id="load-progress-file" type="file" accept="application/json,.json" hidden>
+          <span class="progress-message" id="progress-message" aria-live="polite"></span>
+        </div>
       </nav>
     </div>
   </header>
