@@ -12,6 +12,7 @@ const APP_ID = "boolesche-algebra-trainer";
 const PROGRESS_VERSION = 2;
 const STORAGE_KEY = "boolesche-algebra-trainer-progress-v2";
 const COOKIE_KEY = "boolesche_algebra_trainer_progress";
+const DEFAULT_TASK_PROMPT = "Forme den Ausgangsterm Schritt für Schritt um.";
 
 // Alle Aufgaben liegen bewusst zentral in dieser Struktur.
 // Neue Aufgaben lassen sich pro Level über start + steps ergänzen.
@@ -20,7 +21,7 @@ const TASKS = {
     {
       id: "leicht-demorgan-und",
       title: "Aufgabe 1",
-      prompt: "Wende das De Morgansche Gesetz auf den negierten UND-Term an.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "¬(a ∧ b)",
       steps: [
         { term: "¬a ∨ ¬b", law: "demorgan" }
@@ -29,7 +30,7 @@ const TASKS = {
     {
       id: "leicht-komplement-und",
       title: "Aufgabe 2",
-      prompt: "Vereinfache den Term mit dem Komplementärgesetz.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "a ∧ ¬a",
       steps: [
         { term: "0", law: "complement" }
@@ -38,7 +39,7 @@ const TASKS = {
     {
       id: "leicht-kommutativ-oder",
       title: "Aufgabe 3",
-      prompt: "Vertausche die Operanden mithilfe des Kommutativgesetzes.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "a ∨ b",
       steps: [
         { term: "b ∨ a", law: "commutative" }
@@ -49,7 +50,7 @@ const TASKS = {
     {
       id: "mittel-demorgan-doppelnegation",
       title: "Aufgabe 1",
-      prompt: "Forme mit De Morgan um und vereinfache anschließend die doppelte Negation.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "¬(a ∨ ¬b)",
       steps: [
         { term: "¬a ∧ ¬¬b", law: "demorgan" },
@@ -59,7 +60,7 @@ const TASKS = {
     {
       id: "mittel-distributiv-kurz",
       title: "Aufgabe 2",
-      prompt: "Fasse den gemeinsamen Teil mit dem Distributivgesetz zusammen.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "(a ∨ b) ∧ (a ∨ c)",
       steps: [
         { term: "a ∨ (b ∧ c)", law: "distributive" }
@@ -68,8 +69,8 @@ const TASKS = {
     {
       id: "mittel-assoziativ",
       title: "Aufgabe 3",
-      prompt: "Setze die Klammern mit dem Assoziativgesetz neu.",
-      start: "((a ∨ b) ∨ c)",
+      prompt: DEFAULT_TASK_PROMPT,
+      start: "(a ∨ b) ∨ c",
       steps: [
         { term: "a ∨ (b ∨ c)", law: "associative" }
       ]
@@ -79,7 +80,7 @@ const TASKS = {
     {
       id: "schwer-xor-umformung",
       title: "Aufgabe 1",
-      prompt: "Forme den Term in mehreren Schritten mit Distributiv-, Komplementär- und De-Morgan-Gesetz um.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "(¬a ∧ b) ∨ (a ∧ ¬b)",
       steps: [
         { term: "((¬a ∧ b) ∨ a) ∧ ((¬a ∧ b) ∨ ¬b)", law: "distributive" },
@@ -91,7 +92,7 @@ const TASKS = {
     {
       id: "schwer-ausklammern-komplement",
       title: "Aufgabe 2",
-      prompt: "Klammere aus und nutze anschließend das Komplementärgesetz.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "(a ∧ b) ∨ (a ∧ ¬b)",
       steps: [
         { term: "a ∧ (b ∨ ¬b)", law: "distributive" },
@@ -102,7 +103,7 @@ const TASKS = {
     {
       id: "schwer-ausmultiplizieren-komplement",
       title: "Aufgabe 3",
-      prompt: "Wende das Distributivgesetz an und vereinfache den entstehenden Komplementärterm.",
+      prompt: DEFAULT_TASK_PROMPT,
       start: "(a ∨ ¬b) ∧ b",
       steps: [
         { term: "(a ∧ b) ∨ (¬b ∧ b)", law: "distributive" },
@@ -113,6 +114,27 @@ const TASKS = {
   ]
 };
 
+const TASK_PROGRESS_ALIASES = {
+  "mittel-distributiv-kurz": ["schwer-distributiv-kurz"],
+  "mittel-assoziativ": ["schwer-assoziativ"],
+  "schwer-ausklammern-komplement": [
+    "mittel-ausklammern-komplement",
+    "mittel-distributiv-ausklammern",
+    "mittel-distributiv-komplement"
+  ],
+  "schwer-ausmultiplizieren-komplement": [
+    "mittel-ausmultiplizieren-komplement",
+    "mittel-distributiv-ausmultiplizieren"
+  ]
+};
+
+const TASK_LOCATION_ALIASES = {
+  "mittel-distributiv-kurz": [{ level: "schwer", taskIndex: 1 }],
+  "mittel-assoziativ": [{ level: "schwer", taskIndex: 2 }],
+  "schwer-ausklammern-komplement": [{ level: "mittel", taskIndex: 1 }],
+  "schwer-ausmultiplizieren-komplement": [{ level: "mittel", taskIndex: 2 }]
+};
+
 // Flacher UI-Zustand: Die Lösung selbst bleibt in TASKS, hier steht nur der aktuelle Fortschritt.
 const state = {
   level: "leicht",
@@ -120,7 +142,8 @@ const state = {
   stepIndex: 0,
   currentTerm: "",
   entryTokens: [],
-  negationMode: false,
+  cursorIndex: 0,
+  activeNegationLayers: new Set(),
   completedTasks: new Set(),
   progress: loadSavedProgress()
 };
@@ -156,7 +179,9 @@ function bindElements() {
   elements.lawSelect = document.querySelector("#law-select");
   elements.termPreview = document.querySelector("#term-preview");
   elements.tokenButtons = Array.from(document.querySelectorAll(".token-button"));
-  elements.negationButton = document.querySelector('[data-token="¬"]');
+  elements.negationButtons = Array.from(document.querySelectorAll("[data-not-layer]"));
+  elements.cursorLeftButton = document.querySelector("#cursor-left-button");
+  elements.cursorRightButton = document.querySelector("#cursor-right-button");
   elements.deleteLastButton = document.querySelector("#delete-last-button");
   elements.clearEntryButton = document.querySelector("#clear-entry-button");
   elements.checkStepButton = document.querySelector("#check-step-button");
@@ -193,21 +218,29 @@ function bindEvents() {
 
   elements.tokenButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      if (button.dataset.token === "¬") {
-        toggleNegationMode();
+      if (button.dataset.notLayer) {
+        handleNegationButton(Number(button.dataset.notLayer));
         return;
       }
-      state.entryTokens.push({
+      insertEntryToken({
         value: button.dataset.token,
-        negated: state.negationMode
+        negationDepth: getActiveNegationDepth()
       });
-      renderEntry();
     });
   });
 
+  elements.termPreview.addEventListener("click", handlePreviewCursorEvent);
+  elements.termPreview.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      handlePreviewCursorEvent(event);
+    }
+  });
+
+  elements.cursorLeftButton.addEventListener("click", () => moveCursor(-1));
+  elements.cursorRightButton.addEventListener("click", () => moveCursor(1));
+
   elements.deleteLastButton.addEventListener("click", () => {
-    state.entryTokens.pop();
-    renderEntry();
+    deleteTokenBeforeCursor();
   });
 
   elements.clearEntryButton.addEventListener("click", () => {
@@ -286,7 +319,8 @@ function selectLevel(level) {
   state.stepIndex = 0;
   state.currentTerm = "";
   state.entryTokens = [];
-  state.negationMode = false;
+  state.cursorIndex = 0;
+  state.activeNegationLayers.clear();
   renderLevel();
   renderNegationMode();
   renderTaskOverview();
@@ -352,7 +386,8 @@ function openTask(index) {
   state.stepIndex = clampStepIndex(task, savedProgress ? savedProgress.stepIndex : 0);
   state.currentTerm = getTermAtStep(task, state.stepIndex);
   state.entryTokens = [];
-  state.negationMode = false;
+  state.cursorIndex = 0;
+  state.activeNegationLayers.clear();
 
   elements.workspace.classList.remove("is-empty");
   elements.emptyState.hidden = true;
@@ -389,7 +424,8 @@ function resetCurrentTask() {
   state.stepIndex = 0;
   state.currentTerm = task.start;
   state.entryTokens = [];
-  state.negationMode = false;
+  state.cursorIndex = 0;
+  state.activeNegationLayers.clear();
   elements.lawSelect.value = "";
   renderFormula(elements.currentTerm, task.start);
   renderEntry();
@@ -403,29 +439,186 @@ function resetCurrentTask() {
 
 function clearEntry() {
   state.entryTokens = [];
-  state.negationMode = false;
+  state.cursorIndex = 0;
+  state.activeNegationLayers.clear();
   renderEntry();
   renderNegationMode();
 }
 
-function toggleNegationMode() {
-  state.negationMode = !state.negationMode;
-  renderNegationMode();
+function insertEntryToken(token) {
+  state.cursorIndex = clampCursorIndex(state.cursorIndex);
+  state.entryTokens.splice(state.cursorIndex, 0, token);
+  state.cursorIndex += 1;
+  renderEntry();
 }
 
-function renderNegationMode() {
-  if (!elements.negationButton) {
+function deleteTokenBeforeCursor() {
+  state.cursorIndex = clampCursorIndex(state.cursorIndex);
+  if (state.cursorIndex <= 0) {
     return;
   }
 
-  elements.negationButton.classList.toggle("is-active", state.negationMode);
-  elements.negationButton.setAttribute("aria-pressed", String(state.negationMode));
+  state.entryTokens.splice(state.cursorIndex - 1, 1);
+  state.cursorIndex -= 1;
+  renderEntry();
+}
+
+function moveCursor(offset) {
+  setCursor(state.cursorIndex + offset);
+}
+
+function setCursor(index) {
+  state.cursorIndex = clampCursorIndex(index);
+  renderEntry();
+}
+
+function clampCursorIndex(index) {
+  const numericIndex = Number(index);
+  if (!Number.isFinite(numericIndex)) {
+    return state.entryTokens.length;
+  }
+  return Math.min(Math.max(0, numericIndex), state.entryTokens.length);
+}
+
+function handlePreviewCursorEvent(event) {
+  const clickedElement = event.target && event.target.closest
+    ? event.target
+    : event.target.parentElement;
+  if (!clickedElement) {
+    return;
+  }
+  const target = clickedElement.closest("[data-cursor-index], [data-token-index]");
+  if (!target || !elements.termPreview.contains(target)) {
+    return;
+  }
+
+  event.preventDefault();
+  if (target.dataset.cursorIndex !== undefined) {
+    setCursor(Number(target.dataset.cursorIndex));
+    return;
+  }
+
+  setCursor(Number(target.dataset.tokenIndex) + 1);
+}
+
+function handleNegationButton(layer) {
+  state.cursorIndex = clampCursorIndex(state.cursorIndex);
+  const negationLayer = Math.max(1, Math.min(3, Number(layer) || 1));
+
+  if (state.cursorIndex < state.entryTokens.length) {
+    const token = normalizeEntryToken(state.entryTokens[state.cursorIndex]);
+    token.negationDepth += 1;
+    state.entryTokens[state.cursorIndex] = token;
+    state.cursorIndex += 1;
+    renderEntry();
+    return;
+  }
+
+  if (state.activeNegationLayers.has(negationLayer)) {
+    state.activeNegationLayers.delete(negationLayer);
+  } else {
+    state.activeNegationLayers.add(negationLayer);
+  }
+
+  renderNegationMode();
+}
+
+function getActiveNegationDepth() {
+  return state.activeNegationLayers.size;
+}
+
+function renderNegationMode() {
+  if (!elements.negationButtons) {
+    return;
+  }
+
+  elements.negationButtons.forEach((button) => {
+    const layer = Number(button.dataset.notLayer) || 1;
+    const isActive = state.activeNegationLayers.has(layer);
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
 }
 
 function renderEntry() {
   const value = formatTokens(state.entryTokens);
   elements.termPreview.classList.toggle("is-empty", !value);
-  renderFormula(elements.termPreview, value, "Noch kein Baustein gewählt");
+  renderEditableFormula();
+  renderCursorButtons();
+}
+
+function renderEditableFormula() {
+  state.cursorIndex = clampCursorIndex(state.cursorIndex);
+
+  if (!state.entryTokens.length) {
+    elements.termPreview.innerHTML = `
+      ${renderCursorSlot(0)}
+      <span class="empty-entry-text">Noch kein Baustein gewählt</span>
+    `;
+    elements.termPreview.removeAttribute("aria-label");
+    return;
+  }
+
+  elements.termPreview.innerHTML = renderEditableRange(0, state.entryTokens.length, 1);
+  elements.termPreview.setAttribute("aria-label", termToAccessibleText(formatTokens(state.entryTokens)));
+}
+
+function renderEditableRange(start, end, layer) {
+  let html = "";
+  let index = start;
+  let lastCursorIndex = -1;
+
+  const appendCursor = (cursorIndex) => {
+    if (lastCursorIndex === cursorIndex) {
+      return;
+    }
+
+    html += renderCursorSlot(cursorIndex);
+    lastCursorIndex = cursorIndex;
+  };
+
+  while (index < end) {
+    const token = normalizeEntryToken(state.entryTokens[index]);
+
+    if (layer <= 3 && token.negationDepth >= layer) {
+      const segmentStart = index;
+
+      while (
+        index < end
+        && normalizeEntryToken(state.entryTokens[index]).negationDepth >= layer
+      ) {
+        index += 1;
+      }
+
+      html += `<span class="editable-not-run editable-not-run-${layer}">${renderEditableRange(segmentStart, index, layer + 1)}</span>`;
+      lastCursorIndex = index;
+      continue;
+    }
+
+    appendCursor(index);
+    html += renderEditableToken(token, index);
+    index += 1;
+  }
+
+  appendCursor(end);
+  return html;
+}
+
+function renderCursorSlot(index) {
+  const isActive = index === state.cursorIndex;
+  return `<span class="cursor-slot${isActive ? " is-active" : ""}" role="button" tabindex="0" data-cursor-index="${index}" aria-label="Cursor an Position ${index} setzen"></span>`;
+}
+
+function renderEditableToken(rawToken, index) {
+  const token = normalizeEntryToken(rawToken);
+  const spacingClass = token.value === "∧" || token.value === "∨" ? " is-operator" : "";
+  const tokenHtml = escapeHtml(token.value);
+  return `<span class="formula-token${spacingClass}" role="button" tabindex="0" data-token-index="${index}" aria-label="Cursor hinter ${termToAccessibleText(token.value)} setzen">${tokenHtml}</span>`;
+}
+
+function renderCursorButtons() {
+  elements.cursorLeftButton.disabled = state.cursorIndex <= 0;
+  elements.cursorRightButton.disabled = state.cursorIndex >= state.entryTokens.length;
 }
 
 function renderProgress() {
@@ -498,8 +691,8 @@ function checkStep() {
     return;
   }
 
-  // Hauptvalidierung: exakt der nächste vorgegebene Lösungsschritt und das passende Gesetz.
-  const termMatches = normalizeTerm(entry) === normalizeTerm(expected.term);
+  // Hauptvalidierung: nächster Lösungsschritt mit robustem Vergleich gegen überflüssige Klammern.
+  const termMatches = termsMatch(entry, expected.term);
   const lawMatches = selectedLaw === expected.law;
 
   if (termMatches && lawMatches) {
@@ -595,6 +788,18 @@ function buildEquivalenceHint(leftTerm, rightTerm) {
     return " Dein Term ist logisch äquivalent zum aktuellen Term, folgt hier aber nicht dem vorgegebenen nächsten Lösungsschritt.";
   }
   return "";
+}
+
+function termsMatch(leftTerm, rightTerm) {
+  if (normalizeTerm(leftTerm) === normalizeTerm(rightTerm)) {
+    return true;
+  }
+
+  try {
+    return canonicalizeAst(parseBooleanTerm(leftTerm)) === canonicalizeAst(parseBooleanTerm(rightTerm));
+  } catch (error) {
+    return false;
+  }
 }
 
 function hasActiveTask() {
@@ -741,6 +946,21 @@ function readProgressMapFromPayload(payload) {
     return payload.progress;
   }
 
+  const completedTaskIds = Array.isArray(payload.completedTaskIds)
+    ? payload.completedTaskIds
+    : Array.isArray(payload.completedTasks)
+      ? payload.completedTasks
+      : null;
+
+  if (completedTaskIds) {
+    return completedTaskIds.reduce((progress, taskId) => {
+      if (typeof taskId === "string") {
+        progress[taskId] = { completed: true, stepIndex: Number.MAX_SAFE_INTEGER };
+      }
+      return progress;
+    }, {});
+  }
+
   // Abwärtskompatibel zu älteren Speicherständen, die direkt die Aufgaben-Map enthielten.
   return payload;
 }
@@ -751,7 +971,7 @@ function normalizeProgressMap(rawProgress) {
   Object.keys(TASKS).forEach((level) => {
     TASKS[level].forEach((task, index) => {
       const taskId = getTaskId(level, index);
-      const rawTaskProgress = rawProgress && typeof rawProgress === "object" ? rawProgress[taskId] : null;
+      const rawTaskProgress = findRawTaskProgress(rawProgress, task, taskId);
       if (!rawTaskProgress || typeof rawTaskProgress !== "object") {
         return;
       }
@@ -774,6 +994,74 @@ function normalizeProgressMap(rawProgress) {
   });
 
   return normalized;
+}
+
+function findRawTaskProgress(rawProgress, task, taskId) {
+  if (!rawProgress || typeof rawProgress !== "object") {
+    return null;
+  }
+
+  const directProgress = readRawTaskProgress(rawProgress, taskId);
+  if (directProgress) {
+    return directProgress;
+  }
+
+  const aliases = TASK_PROGRESS_ALIASES[taskId] || [];
+  for (const alias of aliases) {
+    const aliasProgress = readRawTaskProgress(rawProgress, alias);
+    if (aliasProgress) {
+      return aliasProgress;
+    }
+  }
+
+  const locationAliases = TASK_LOCATION_ALIASES[taskId] || [];
+  for (const location of locationAliases) {
+    const locationProgress = findProgressByLocation(rawProgress, location);
+    if (locationProgress && progressBelongsToTask(locationProgress, task)) {
+      return locationProgress;
+    }
+  }
+
+  return findProgressByTaskSignature(rawProgress, task);
+}
+
+function readRawTaskProgress(rawProgress, taskId) {
+  const progress = rawProgress[taskId];
+  return progress && typeof progress === "object" && !Array.isArray(progress) ? progress : null;
+}
+
+function findProgressByLocation(rawProgress, location) {
+  return Object.values(rawProgress).find((progress) => {
+    if (!progress || typeof progress !== "object" || Array.isArray(progress)) {
+      return false;
+    }
+
+    return progress.level === location.level && Number(progress.taskIndex) === location.taskIndex;
+  }) || null;
+}
+
+function findProgressByTaskSignature(rawProgress, task) {
+  return Object.values(rawProgress).find((progress) => {
+    if (!progress || typeof progress !== "object" || Array.isArray(progress)) {
+      return false;
+    }
+
+    return progressBelongsToTask(progress, task);
+  }) || null;
+}
+
+function progressBelongsToTask(progress, task) {
+  if (Array.isArray(progress.history) && progress.history.length > 0) {
+    const firstEntry = progress.history[0];
+    if (firstEntry && typeof firstEntry.term === "string" && termsMatch(firstEntry.term, task.start)) {
+      return true;
+    }
+  }
+
+  const stepIndex = clampStepIndex(task, progress.stepIndex);
+  return stepIndex > 0
+    && typeof progress.currentTerm === "string"
+    && termsMatch(progress.currentTerm, getTermAtStep(task, stepIndex));
 }
 
 function normalizeHistory(rawHistory, task, stepIndex) {
@@ -992,13 +1280,14 @@ function formatTokens(tokens) {
 
   while (index < tokens.length) {
     const token = normalizeEntryToken(tokens[index]);
-    if (token.negated) {
+    if (token.negationDepth > 0) {
       const run = [];
-      while (index < tokens.length && normalizeEntryToken(tokens[index]).negated) {
+      const negationDepth = token.negationDepth;
+      while (index < tokens.length && normalizeEntryToken(tokens[index]).negationDepth === negationDepth) {
         run.push(normalizeEntryToken(tokens[index]).value);
         index += 1;
       }
-      parts.push(formatNegatedRun(run));
+      parts.push(formatNegatedRun(run, negationDepth));
       continue;
     }
 
@@ -1011,26 +1300,29 @@ function formatTokens(tokens) {
 
 function normalizeEntryToken(token) {
   if (typeof token === "string") {
-    return { value: token, negated: false };
+    return { value: token, negationDepth: 0 };
   }
+
+  const legacyDepth = token.negated ? 1 : 0;
   return {
     value: token.value,
-    negated: Boolean(token.negated)
+    negationDepth: Number.isFinite(Number(token.negationDepth)) ? Math.max(0, Number(token.negationDepth)) : legacyDepth
   };
 }
 
-function formatNegatedRun(tokens) {
+function formatNegatedRun(tokens, negationDepth = 1) {
   const term = formatPlainTokens(tokens);
   if (!term) {
     return "";
   }
 
+  const prefix = "¬".repeat(negationDepth);
   const compactTerm = term.replace(/\s+/g, "");
   if (tokens.length === 1 || hasRedundantOuterParens(compactTerm)) {
-    return `¬${term}`;
+    return `${prefix}${term}`;
   }
 
-  return `¬(${term})`;
+  return `${prefix}(${term})`;
 }
 
 function formatPlainTokens(tokens) {
@@ -1063,6 +1355,34 @@ function areEquivalent(leftTerm, rightTerm) {
   } catch (error) {
     return null;
   }
+}
+
+function canonicalizeAst(node) {
+  switch (node.type) {
+    case "variable":
+      return node.name;
+    case "constant":
+      return node.value ? "1" : "0";
+    case "not":
+      return `not(${canonicalizeAst(node.value)})`;
+    case "and":
+    case "or": {
+      const parts = flattenAssociative(node, node.type).map(canonicalizeAst);
+      return `${node.type}(${parts.join(",")})`;
+    }
+    default:
+      throw new Error(`Unknown node type ${node.type}`);
+  }
+}
+
+function flattenAssociative(node, type) {
+  if (node.type !== type) {
+    return [node];
+  }
+  return [
+    ...flattenAssociative(node.left, type),
+    ...flattenAssociative(node.right, type)
+  ];
 }
 
 function parseBooleanTerm(term) {

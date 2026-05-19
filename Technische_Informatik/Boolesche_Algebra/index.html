@@ -103,7 +103,7 @@
 
           <div class="entry-preview" aria-live="polite">
             <span class="preview-label">Deine Eingabe</span>
-            <output class="formula preview-formula" id="term-preview">Noch kein Baustein gewählt</output>
+            <div class="formula preview-formula editable-formula" id="term-preview" role="group" aria-label="Deine Eingabe mit Cursor">Noch kein Baustein gewählt</div>
           </div>
 
           <div class="token-bank" aria-label="Baustein-Leiste">
@@ -114,13 +114,17 @@
             <button type="button" class="token-button" data-token="1">1</button>
             <button type="button" class="token-button" data-token="(">(</button>
             <button type="button" class="token-button" data-token=")">)</button>
-            <button type="button" class="token-button" data-token="¬" aria-pressed="false">NOT</button>
+            <button type="button" class="token-button" data-not-layer="1" aria-pressed="false">NOT 1</button>
+            <button type="button" class="token-button" data-not-layer="2" aria-pressed="false">NOT 2</button>
+            <button type="button" class="token-button" data-not-layer="3" aria-pressed="false">NOT 3</button>
             <button type="button" class="token-button" data-token="∧">AND</button>
             <button type="button" class="token-button" data-token="∨">OR</button>
           </div>
 
           <div class="action-row">
-            <button class="button-secondary" type="button" id="delete-last-button">Letztes Element löschen</button>
+            <button class="button-secondary" type="button" id="cursor-left-button">Cursor links</button>
+            <button class="button-secondary" type="button" id="cursor-right-button">Cursor rechts</button>
+            <button class="button-secondary" type="button" id="delete-last-button">Element vor Cursor löschen</button>
             <button class="button-secondary" type="button" id="clear-entry-button">Eingabe zurücksetzen</button>
             <button class="button-primary" type="button" id="check-step-button">Schritt prüfen</button>
             <button class="button-ghost" type="button" id="show-step-button">Nächsten Schritt anzeigen</button>
