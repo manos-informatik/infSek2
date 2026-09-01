@@ -24,6 +24,12 @@
   box-sizing: border-box;
 }
 
+/* Muss nach den Layout-Regeln greifen: eigene display-Angaben (z. B. display:grid)
+   würden das eingebaute [hidden]-Verhalten des Browsers sonst überstimmen. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -51,52 +57,6 @@ button, input, select, textarea, fieldset {
 
 .hero {
   padding: 2.2rem 1.25rem 1.1rem;
-}
-
-.progress-toolbar {
-  width: min(1400px, 100% - 2rem);
-  margin: 0 auto 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.progress-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 1px solid var(--button-border);
-  border-radius: 12px;
-  padding: 0.6rem 0.95rem;
-  color: var(--button-text);
-  background: linear-gradient(165deg, var(--button-dark), var(--button-light));
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: border-color 140ms ease, filter 140ms ease, transform 140ms ease;
-}
-
-.progress-btn:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  border-color: rgba(34, 211, 238, 0.5);
-}
-
-.progress-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-.progress-message {
-  min-height: 1.35rem;
-  flex: 1 1 16rem;
-  color: #9fbbd7;
-  font-size: 0.9rem;
-}
-
-.progress-message.is-error {
-  color: var(--danger);
 }
 
 .hero-inner {
@@ -129,13 +89,6 @@ h2 {
   color: var(--text);
 }
 
-.intro {
-  margin: 0;
-  max-width: 68ch;
-  color: var(--muted);
-  line-height: 1.58;
-}
-
 /* --- Layout --- */
 .oop-page {
   padding: 1.8rem 0 2.4rem;
@@ -143,9 +96,21 @@ h2 {
 
 .oop-grid {
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(420px, 1fr);
+  /* Beide Spalten exakt gleich breit; align-items bleibt auf stretch,
+     damit beide Panels auch dieselbe Höhe bekommen. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.2rem;
-  align-items: start;
+}
+
+/* Zeichenfläche mittig in der (nun höheren) Grid-Karte */
+.grid-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-panel .canvas-board {
+  flex: 1;
+  align-items: center;
 }
 
 .panel {
@@ -290,6 +255,7 @@ h2 {
 .action-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.6rem;
   margin-top: 1rem;
 }
@@ -517,18 +483,35 @@ h2 {
   box-shadow: var(--focus);
 }
 
-.color-preview-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.75rem;
+#param-color {
+  width: 100%;
+  height: 2.6rem;
+  padding: 0.2rem;
+  border: 1px solid var(--button-border);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  cursor: pointer;
 }
 
-.color-preview {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 6px;
-  border: 1px solid rgba(226, 232, 240, 0.4);
+#param-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+#param-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
+
+#param-color:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.param-color-text {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.88rem;
 }
 
 .code-preview {
@@ -549,6 +532,143 @@ h2 {
   color: var(--muted);
   line-height: 1.5;
 }
+
+/* --- Code-Dialog im Stil der Processing-IDE --- */
+.code-overlay-content {
+  width: min(760px, calc(100% - 32px));
+}
+
+.ide {
+  overflow: hidden;
+  border: 1px solid #7ea6c4;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.ide-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: #c9def0;
+  border-bottom: 1px solid #a8c6de;
+}
+
+.ide-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #2d7bb6;
+  position: relative;
+}
+
+.ide-icon-run::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 0.32rem 0 0.32rem 0.5rem;
+  border-color: transparent transparent transparent #ffffff;
+}
+
+.ide-icon-stop::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+}
+
+.ide-mode {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #8fb2cc;
+  border-radius: 4px;
+  background: #eaf3fa;
+  color: #1a3d55;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.ide-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0.35rem 0.5rem 0;
+  background: #c9def0;
+}
+
+.ide-tab {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #a8c6de;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  background: #b4d2e8;
+  color: #14344a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ide-tab.is-active {
+  background: #ffffff;
+  color: #0d2433;
+}
+
+.ide-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 123, 182, 0.55);
+}
+
+.ide-editor {
+  max-height: 46vh;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.code-view {
+  padding: 0.5rem 0;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.code-view:focus-visible {
+  outline: 2px solid #2d7bb6;
+  outline-offset: -2px;
+}
+
+.ide-line {
+  display: flex;
+  align-items: flex-start;
+  white-space: pre;
+}
+
+.ide-gutter {
+  flex: 0 0 2.6rem;
+  padding-right: 0.6rem;
+  border-right: 1px solid #dbe6ee;
+  color: #8aa0b0;
+  text-align: right;
+  user-select: none;
+}
+
+.ide-code {
+  padding-left: 0.8rem;
+  color: #10202b;
+}
+
+/* Syntaxfarben, angelehnt an die Processing-IDE */
+.tok-keyword { color: #33997e; }
+.tok-type { color: #e2661a; }
+.tok-function { color: #006699; font-weight: 700; }
+.tok-number { color: #2d7bb6; }
+.tok-comment { color: #7e7e7e; font-style: italic; }
+
 
 /* --- Footer --- */
 .footer {
@@ -574,7 +694,6 @@ h2 {
   .object-card,
   .btn,
   .nav-btn,
-  .progress-btn,
   .overlay,
   .overlay-content {
     transition: none;

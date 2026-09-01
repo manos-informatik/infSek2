@@ -10,11 +10,6 @@
   const CARD_TRANSITION_MS = 200;
 
   const elements = {
-    saveProgressButton: document.querySelector("#save-progress-button"),
-    loadProgressButton: document.querySelector("#load-progress-button"),
-    loadProgressFile: document.querySelector("#load-progress-file"),
-    progressMessage: document.querySelector("#progress-message"),
-
     drawingCanvas: document.querySelector("#drawing-canvas"),
     gridCanvas: document.querySelector("#grid-canvas"),
 
@@ -34,19 +29,23 @@
     paramX: document.querySelector("#param-x"),
     paramY: document.querySelector("#param-y"),
     paramDurchmesser: document.querySelector("#param-durchmesser"),
-    paramR: document.querySelector("#param-r"),
-    paramG: document.querySelector("#param-g"),
-    paramB: document.querySelector("#param-b"),
-    paramColorRow: document.querySelector("#param-color-row"),
-    paramColorPreview: document.querySelector("#param-color-preview"),
+    paramColor: document.querySelector("#param-color"),
     paramColorText: document.querySelector("#param-color-text"),
+    paramFeedback: document.querySelector("#param-feedback"),
     codePreview: document.querySelector("#code-preview"),
     cancelObjectButton: document.querySelector("#cancel-object-button"),
     confirmObjectButton: document.querySelector("#confirm-object-button"),
 
     deleteAllOverlay: document.querySelector("#delete-all-overlay"),
     cancelDeleteAllButton: document.querySelector("#cancel-delete-all-button"),
-    confirmDeleteAllButton: document.querySelector("#confirm-delete-all-button")
+    confirmDeleteAllButton: document.querySelector("#confirm-delete-all-button"),
+
+    showCodeButton: document.querySelector("#show-code-button"),
+    codeOverlay: document.querySelector("#code-overlay"),
+    closeCodeButton: document.querySelector("#close-code-button"),
+    ideTabs: Array.from(document.querySelectorAll(".ide-tab")),
+    codeViewMain: document.querySelector("#code-view-main"),
+    codeViewKreis: document.querySelector("#code-view-kreis")
   };
 
   const drawingContext = elements.drawingCanvas.getContext("2d");
@@ -71,6 +70,19 @@
 
   function rgbText(rgb) {
     return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+  }
+
+  function hexToRgb(hex) {
+    const normalized = (hex || "#000000").replace("#", "");
+    const r = parseInt(normalized.substring(0, 2), 16);
+    const g = parseInt(normalized.substring(2, 4), 16);
+    const b = parseInt(normalized.substring(4, 6), 16);
+
+    return {
+      r: Number.isFinite(r) ? r : 0,
+      g: Number.isFinite(g) ? g : 0,
+      b: Number.isFinite(b) ? b : 0
+    };
   }
 
   function prefersReducedMotion() {
@@ -108,6 +120,34 @@
     return null;
   }
 
+  function validateParams() {
+    const xRaw = elements.paramX.value.trim();
+    const yRaw = elements.paramY.value.trim();
+    const dRaw = elements.paramDurchmesser.value.trim();
+
+    if (xRaw === "" || yRaw === "" || dRaw === "") {
+      return "Bitte x, y und durchmesser ausfüllen.";
+    }
+
+    const durchmesser = Number(dRaw);
+    if (!Number.isFinite(durchmesser) || durchmesser <= 0) {
+      return "durchmesser muss größer als 0 sein.";
+    }
+
+    return null;
+  }
+
+  function setFieldFeedback(el, message) {
+    if (!message) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+
+    el.hidden = false;
+    el.textContent = message;
+  }
+
   // ---------------------------------------------------------------------
   // Objekte erzeugen
   // ---------------------------------------------------------------------
@@ -123,14 +163,14 @@
     };
   }
 
-  function createParameterKreis(name, x, y, durchmesser, r, g, b) {
+  function createParameterKreis(name, x, y, durchmesser, farbe) {
     return {
       name,
       ctor: "parameter",
       x: clamp(x, 0, GRID_SIZE),
       y: clamp(y, 0, GRID_SIZE),
       durchmesser: clamp(durchmesser, 1, GRID_SIZE),
-      farbe: { r: clamp(r, 0, 255), g: clamp(g, 0, 255), b: clamp(b, 0, 255) }
+      farbe: { r: clamp(farbe.r, 0, 255), g: clamp(farbe.g, 0, 255), b: clamp(farbe.b, 0, 255) }
     };
   }
 
@@ -276,7 +316,7 @@
         const hint = document.createElement("p");
         hint.className = "empty-hint";
         hint.id = "empty-hint";
-        hint.textContent = "Noch kein Objekt erstellt. Klicke auf „+ new“.";
+        hint.textContent = "Noch kein Objekt erstellt. Klicke auf „new“.";
         wrap.append(hint);
         return;
       }
@@ -348,8 +388,18 @@
     persistProgress();
   }
 
+  function isOverlayOpen(overlay) {
+    return overlay.classList.contains("is-visible");
+  }
+
+  function isAnyOverlayOpen() {
+    return isOverlayOpen(elements.newObjectOverlay)
+      || isOverlayOpen(elements.deleteAllOverlay)
+      || isOverlayOpen(elements.codeOverlay);
+  }
+
   function handleGlobalKeydown(event) {
-    if (elements.newObjectOverlay.classList.contains("is-visible") || elements.deleteAllOverlay.classList.contains("is-visible")) {
+    if (isAnyOverlayOpen()) {
       return;
     }
 
@@ -376,18 +426,9 @@
     return checked ? checked.value : "standard";
   }
 
-  function readParamValue(input) {
-    const value = Number(input.value);
-    return Number.isFinite(value) ? value : 0;
-  }
-
-  function updateParamColorPreview() {
-    const r = clamp(readParamValue(elements.paramR), 0, 255);
-    const g = clamp(readParamValue(elements.paramG), 0, 255);
-    const b = clamp(readParamValue(elements.paramB), 0, 255);
-
-    elements.paramColorPreview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-    elements.paramColorText.textContent = `color(${r}, ${g}, ${b})`;
+  function updateParamColorText() {
+    const { r, g, b } = hexToRgb(elements.paramColor.value);
+    elements.paramColorText.textContent = `farbe = color(${r}, ${g}, ${b})`;
   }
 
   function updateCodePreview() {
@@ -399,43 +440,32 @@
       return;
     }
 
-    const x = readParamValue(elements.paramX);
-    const y = readParamValue(elements.paramY);
-    const d = readParamValue(elements.paramDurchmesser);
-    const r = clamp(readParamValue(elements.paramR), 0, 255);
-    const g = clamp(readParamValue(elements.paramG), 0, 255);
-    const b = clamp(readParamValue(elements.paramB), 0, 255);
+    const x = elements.paramX.value.trim();
+    const y = elements.paramY.value.trim();
+    const d = elements.paramDurchmesser.value.trim();
+    const { r, g, b } = hexToRgb(elements.paramColor.value);
 
-    elements.codePreview.textContent = `Kreis ${name} = new Kreis(${x}, ${y}, ${d}, color(${r}, ${g}, ${b}));`;
+    elements.codePreview.textContent =
+      `Kreis ${name} = new Kreis(${x || "?"}, ${y || "?"}, ${d || "?"}, color(${r}, ${g}, ${b}));`;
   }
 
   function updateParamFieldsVisibility() {
     const isParameter = getSelectedCtor() === "parameter";
     elements.paramFields.hidden = !isParameter;
-    elements.paramColorRow.hidden = !isParameter;
+    elements.paramColorText.hidden = !isParameter;
+    setFieldFeedback(elements.paramFeedback, null);
 
     if (isParameter) {
-      updateParamColorPreview();
+      updateParamColorText();
     }
 
     updateCodePreview();
   }
 
-  function showNameFeedback(message) {
-    if (!message) {
-      elements.nameFeedback.hidden = true;
-      elements.nameFeedback.textContent = "";
-      return;
-    }
-
-    elements.nameFeedback.hidden = false;
-    elements.nameFeedback.textContent = message;
-  }
-
   function openNewObjectDialog() {
     elements.newObjectForm.reset();
     elements.objectNameInput.value = nextDefaultName();
-    showNameFeedback(null);
+    setFieldFeedback(elements.nameFeedback, null);
     updateParamFieldsVisibility();
 
     elements.newObjectOverlay.classList.add("is-visible");
@@ -456,24 +486,33 @@
     const nameError = validateName(name, -1);
 
     if (nameError) {
-      showNameFeedback(nameError);
+      setFieldFeedback(elements.nameFeedback, nameError);
       elements.objectNameInput.focus();
       return;
     }
 
-    showNameFeedback(null);
+    setFieldFeedback(elements.nameFeedback, null);
     const ctor = getSelectedCtor();
+
+    if (ctor === "parameter") {
+      const paramError = validateParams();
+      if (paramError) {
+        setFieldFeedback(elements.paramFeedback, paramError);
+        elements.paramX.focus();
+        return;
+      }
+    }
+
+    setFieldFeedback(elements.paramFeedback, null);
 
     const newObject = ctor === "standard"
       ? createStandardKreis(name)
       : createParameterKreis(
         name,
-        readParamValue(elements.paramX),
-        readParamValue(elements.paramY),
-        readParamValue(elements.paramDurchmesser),
-        readParamValue(elements.paramR),
-        readParamValue(elements.paramG),
-        readParamValue(elements.paramB)
+        Number(elements.paramX.value),
+        Number(elements.paramY.value),
+        Number(elements.paramDurchmesser.value),
+        hexToRgb(elements.paramColor.value)
       );
 
     state.objects.push(newObject);
@@ -513,89 +552,203 @@
   }
 
   // ---------------------------------------------------------------------
-  // Fortschritt (localStorage + JSON-Export/Import)
+  // Dialog: Java-Code
   // ---------------------------------------------------------------------
 
-  function buildProgressPayload() {
-    return {
-      version: 1,
-      app: "infsek2-oop-kreis",
-      savedAt: new Date().toISOString(),
-      objects: state.objects,
-      selectedIndex: state.selectedIndex
-    };
-  }
+  const KEYWORDS = new Set(["void", "class", "new", "return", "this", "if", "else", "for", "while"]);
+  const TYPES = new Set(["color", "int", "float", "boolean"]);
+  const BUILTINS = new Set([
+    "setup", "draw", "size", "background", "fill", "circle", "random",
+    "width", "height", "zeichnen"
+  ]);
 
-  function applyProgressPayload(payload) {
-    if (!payload || !Array.isArray(payload.objects)) {
-      return;
+  function buildMainCode() {
+    const lines = [];
+
+    state.objects.forEach((obj) => lines.push(`Kreis ${obj.name};`));
+
+    if (state.objects.length > 0) {
+      lines.push("");
     }
 
-    state.objects = payload.objects;
-    state.selectedIndex = state.objects.length > 0
-      ? clamp(Number(payload.selectedIndex) || 0, 0, state.objects.length - 1)
-      : -1;
+    lines.push("void setup(){");
+    lines.push(`  size(${GRID_SIZE},${GRID_SIZE});`);
+
+    state.objects.forEach((obj) => {
+      if (obj.ctor === "standard") {
+        lines.push(`  ${obj.name} = new Kreis();`);
+      } else {
+        const { r, g, b } = obj.farbe;
+        lines.push(`  ${obj.name} = new Kreis(${obj.x},${obj.y},${obj.durchmesser},color(${r},${g},${b}));`);
+      }
+    });
+
+    lines.push("}");
+    lines.push("");
+    lines.push("void draw(){");
+    lines.push("  background(255);");
+
+    state.objects.forEach((obj) => lines.push(`  ${obj.name}.zeichnen();`));
+
+    lines.push("}");
+
+    return lines.join("\n");
   }
+
+  function buildKreisCode() {
+    return `class Kreis {
+  int x;
+  int y;
+  float durchmesser;
+  color farbe;
+
+  Kreis(){
+    x = width/2;
+    y = height/2;
+    durchmesser = random(${DIAMETER_MIN},${DIAMETER_MAX});
+    farbe = color(random(255),random(255),random(255));
+  }
+
+  Kreis(int x, int y, float durchmesser, color farbe){
+    this.x = x;
+    this.y = y;
+    this.durchmesser = durchmesser;
+    this.farbe = farbe;
+  }
+
+  void zeichnen(){
+    fill(farbe);
+    circle(x,y,durchmesser);
+  }
+}`;
+  }
+
+  function highlightLine(lineText) {
+    const fragment = document.createDocumentFragment();
+    const pattern = /(\/\/.*$)|([A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*)|(\d+(?:\.\d+)?)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = pattern.exec(lineText)) !== null) {
+      if (match.index > lastIndex) {
+        fragment.append(document.createTextNode(lineText.slice(lastIndex, match.index)));
+      }
+
+      const text = match[0];
+      let className = null;
+
+      if (match[1]) {
+        className = "tok-comment";
+      } else if (match[2]) {
+        if (KEYWORDS.has(text)) {
+          className = "tok-keyword";
+        } else if (TYPES.has(text)) {
+          className = "tok-type";
+        } else if (BUILTINS.has(text)) {
+          className = "tok-function";
+        }
+      } else {
+        className = "tok-number";
+      }
+
+      if (className) {
+        const span = document.createElement("span");
+        span.className = className;
+        span.textContent = text;
+        fragment.append(span);
+      } else {
+        fragment.append(document.createTextNode(text));
+      }
+
+      lastIndex = pattern.lastIndex;
+    }
+
+    if (lastIndex < lineText.length) {
+      fragment.append(document.createTextNode(lineText.slice(lastIndex)));
+    }
+
+    return fragment;
+  }
+
+  function renderCodeView(container, code) {
+    container.innerHTML = "";
+
+    code.split("\n").forEach((line, index) => {
+      const lineEl = document.createElement("div");
+      lineEl.className = "ide-line";
+
+      const gutter = document.createElement("span");
+      gutter.className = "ide-gutter";
+      gutter.textContent = String(index + 1);
+
+      const codeEl = document.createElement("span");
+      codeEl.className = "ide-code";
+      codeEl.append(highlightLine(line));
+
+      lineEl.append(gutter, codeEl);
+      container.append(lineEl);
+    });
+  }
+
+  function selectCodeTab(tabName) {
+    elements.ideTabs.forEach((tab) => {
+      const isActive = tab.dataset.tab === tabName;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    elements.codeViewMain.hidden = tabName !== "main";
+    elements.codeViewKreis.hidden = tabName !== "kreis";
+  }
+
+  function openCodeDialog() {
+    renderCodeView(elements.codeViewMain, buildMainCode());
+    renderCodeView(elements.codeViewKreis, buildKreisCode());
+    selectCodeTab("main");
+
+    elements.codeOverlay.classList.add("is-visible");
+    elements.codeOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCodeDialog() {
+    elements.codeOverlay.classList.remove("is-visible");
+    elements.codeOverlay.setAttribute("aria-hidden", "true");
+    elements.showCodeButton.focus();
+  }
+
+  // ---------------------------------------------------------------------
+  // Fortschritt (automatisch im Hintergrund, ohne Bedienelemente)
+  // ---------------------------------------------------------------------
 
   function persistProgress() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildProgressPayload()));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        objects: state.objects,
+        selectedIndex: state.selectedIndex
+      }));
     } catch {
-      // Speichern ist optional; ohne localStorage geht nur der Fortschritt zwischen Reloads verloren.
+      // Speichern ist optional; ohne localStorage geht nur der Fortschritt zwischen Besuchen verloren.
     }
   }
 
   function loadPersistedProgress() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        applyProgressPayload(JSON.parse(raw));
+      if (!raw) {
+        return;
       }
+
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.objects)) {
+        return;
+      }
+
+      state.objects = data.objects;
+      state.selectedIndex = state.objects.length > 0
+        ? clamp(Number(data.selectedIndex) || 0, 0, state.objects.length - 1)
+        : -1;
     } catch {
       // ungültige Daten ignorieren, Seite startet leer
-    }
-  }
-
-  function setProgressMessage(text, isError) {
-    elements.progressMessage.textContent = text;
-    elements.progressMessage.classList.toggle("is-error", Boolean(isError));
-  }
-
-  function exportProgressJson() {
-    const payload = buildProgressPayload();
-    const formatted = `${JSON.stringify(payload, null, 2)}\n`;
-    const blob = new Blob([formatted], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const dateStamp = new Date().toISOString().slice(0, 10);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `oop-kreis-fortschritt-${dateStamp}.json`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-
-    setProgressMessage("Fortschritt wurde als JSON gespeichert.");
-  }
-
-  async function importProgressJson(event) {
-    const file = event.target.files && event.target.files[0];
-    if (!file) {
-      return;
-    }
-
-    try {
-      const content = await file.text();
-      const data = JSON.parse(content);
-      applyProgressPayload(data);
-      renderAll(null);
-      persistProgress();
-      setProgressMessage("Fortschritt aus JSON geladen.");
-    } catch {
-      setProgressMessage("Datei konnte nicht geladen werden. Bitte gültige JSON-Datei wählen.", true);
-    } finally {
-      elements.loadProgressFile.value = "";
     }
   }
 
@@ -617,11 +770,9 @@
   [elements.paramX, elements.paramY, elements.paramDurchmesser].forEach((input) => {
     input.addEventListener("input", updateCodePreview);
   });
-  [elements.paramR, elements.paramG, elements.paramB].forEach((input) => {
-    input.addEventListener("input", () => {
-      updateParamColorPreview();
-      updateCodePreview();
-    });
+  elements.paramColor.addEventListener("input", () => {
+    updateParamColorText();
+    updateCodePreview();
   });
 
   elements.deleteAllButton.addEventListener("click", openDeleteAllDialog);
@@ -638,20 +789,29 @@
       return;
     }
 
-    if (elements.newObjectOverlay.classList.contains("is-visible")) {
+    if (isOverlayOpen(elements.newObjectOverlay)) {
       closeNewObjectDialog();
-    } else if (elements.deleteAllOverlay.classList.contains("is-visible")) {
+    } else if (isOverlayOpen(elements.deleteAllOverlay)) {
       closeDeleteAllDialog();
+    } else if (isOverlayOpen(elements.codeOverlay)) {
+      closeCodeDialog();
     }
+  });
+
+  elements.showCodeButton.addEventListener("click", openCodeDialog);
+  elements.closeCodeButton.addEventListener("click", closeCodeDialog);
+  elements.codeOverlay.addEventListener("click", (event) => {
+    if (event.target === elements.codeOverlay) {
+      closeCodeDialog();
+    }
+  });
+  elements.ideTabs.forEach((tab) => {
+    tab.addEventListener("click", () => selectCodeTab(tab.dataset.tab));
   });
 
   elements.prevObjectButton.addEventListener("click", selectPrevious);
   elements.nextObjectButton.addEventListener("click", selectNext);
   window.addEventListener("keydown", handleGlobalKeydown);
-
-  elements.saveProgressButton.addEventListener("click", exportProgressJson);
-  elements.loadProgressButton.addEventListener("click", () => elements.loadProgressFile.click());
-  elements.loadProgressFile.addEventListener("change", importProgressJson);
 
   // ---------------------------------------------------------------------
   // Start
