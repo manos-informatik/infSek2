@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Klassen und Objekte: Kreis</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="progress-toolbar" aria-label="Fortschritt Aktionen">
+      <button class="progress-btn" id="save-progress-button" type="button">Fortschritt speichern ↑</button>
+      <button class="progress-btn" id="load-progress-button" type="button">Fortschritt laden ↓</button>
+      <input id="load-progress-file" type="file" accept="application/json,.json" hidden />
+      <span class="progress-message" id="progress-message" aria-live="polite"></span>
+    </div>
+
+    <div class="hero-inner">
+      <p class="eyebrow">Objektorientierte Programmierung</p>
+      <h1>Klassen und Objekte</h1>
+      <p class="intro">
+        Erzeuge Kreis-Objekte über den „new“-Knopf und beobachte, wie jedes Objekt als
+        Objektkarte und als Kreis im Grid erscheint.
+      </p>
+    </div>
+  </header>
+
+  <main class="oop-page">
+    <section class="oop-grid" aria-label="Klasse und Objekte">
+      <article class="panel class-panel">
+        <h2>Klasse</h2>
+        <img
+          class="class-diagram"
+          src="klasse-kreis.png"
+          alt="UML-Klassendiagramm Kreis: Attribute x (int), y (int), durchmesser (float), farbe (color); Konstruktoren Kreis() und Kreis(x, y, durchmesser, farbe); Methode zeichnen()"
+        />
+
+        <p class="instance-arrow" aria-hidden="true">↓</p>
+
+        <div class="object-stage">
+          <button class="nav-btn" id="prev-object-button" type="button" aria-label="Vorheriges Objekt anzeigen" disabled>←</button>
+
+          <div class="object-card-wrap" id="object-card-wrap" aria-live="polite">
+            <p class="empty-hint" id="empty-hint">Noch kein Objekt erstellt. Klicke auf „+ new“.</p>
+          </div>
+
+          <button class="nav-btn" id="next-object-button" type="button" aria-label="Nächstes Objekt anzeigen" disabled>→</button>
+        </div>
+
+        <p class="object-counter" id="object-counter"></p>
+
+        <div class="action-row">
+          <button class="btn" id="new-object-button" type="button">+ new</button>
+          <button class="btn ghost" id="delete-all-button" type="button" disabled>Alle löschen</button>
+        </div>
+      </article>
+
+      <article class="panel grid-panel">
+        <h2>Grid</h2>
+        <div class="canvas-board">
+          <div class="canvas-viewport">
+            <div class="canvas-stack" id="canvas-stack">
+              <canvas id="drawing-canvas" class="drawing-layer" width="400" height="400" aria-label="Zeichenfläche mit allen erstellten Kreis-Objekten"></canvas>
+              <canvas id="grid-canvas" class="grid-layer" width="400" height="400" aria-hidden="true"></canvas>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p>
+  </footer>
+
+  <!-- Dialog: neues Objekt -->
+  <div id="new-object-overlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="new-object-title">
+    <div class="overlay-content">
+      <h3 id="new-object-title" class="overlay-title">Neues Kreis-Objekt</h3>
+
+      <form id="new-object-form" novalidate>
+        <label class="field-label" for="object-name-input">Name des Objekts</label>
+        <input id="object-name-input" type="text" autocomplete="off" />
+        <div class="feedback-box error" id="name-feedback" hidden aria-live="polite"></div>
+
+        <fieldset class="ctor-fieldset">
+          <legend>Konstruktor</legend>
+          <label class="radio-row">
+            <input type="radio" name="ctor" value="standard" checked />
+            <span>Standardkonstruktor — Kreis()</span>
+          </label>
+          <label class="radio-row">
+            <input type="radio" name="ctor" value="parameter" />
+            <span>Parameterkonstruktor — Kreis(x, y, durchmesser, farbe)</span>
+          </label>
+        </fieldset>
+
+        <div class="param-grid" id="param-fields" hidden>
+          <div class="param-field">
+            <label for="param-x">x</label>
+            <input id="param-x" type="number" min="0" max="400" step="1" value="20" />
+          </div>
+          <div class="param-field">
+            <label for="param-y">y</label>
+            <input id="param-y" type="number" min="0" max="400" step="1" value="20" />
+          </div>
+          <div class="param-field">
+            <label for="param-durchmesser">durchmesser</label>
+            <input id="param-durchmesser" type="number" min="1" max="400" step="1" value="20" />
+          </div>
+          <div class="param-field">
+            <label for="param-r">farbe: r</label>
+            <input id="param-r" type="number" min="0" max="255" step="1" value="255" />
+          </div>
+          <div class="param-field">
+            <label for="param-g">farbe: g</label>
+            <input id="param-g" type="number" min="0" max="255" step="1" value="0" />
+          </div>
+          <div class="param-field">
+            <label for="param-b">farbe: b</label>
+            <input id="param-b" type="number" min="0" max="255" step="1" value="0" />
+          </div>
+        </div>
+
+        <div class="color-preview-row" id="param-color-row" hidden>
+          <span class="color-preview" id="param-color-preview" aria-hidden="true"></span>
+          <span id="param-color-text"></span>
+        </div>
+
+        <p class="code-preview" id="code-preview" aria-live="polite"></p>
+
+        <div class="action-row">
+          <button class="btn ghost" id="cancel-object-button" type="button">Abbrechen</button>
+          <button class="btn" id="confirm-object-button" type="submit">Bestätigen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dialog: alle löschen bestätigen -->
+  <div id="delete-all-overlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-all-title">
+    <div class="overlay-content">
+      <h3 id="delete-all-title" class="overlay-title">Alle Objekte löschen?</h3>
+      <p class="overlay-text">Das kann nicht rückgängig gemacht werden.</p>
+      <div class="action-row">
+        <button class="btn ghost" id="cancel-delete-all-button" type="button">Abbrechen</button>
+        <button class="btn" id="confirm-delete-all-button" type="button">Löschen</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
