@@ -43,6 +43,7 @@
     showCodeButton: document.querySelector("#show-code-button"),
     codeOverlay: document.querySelector("#code-overlay"),
     closeCodeButton: document.querySelector("#close-code-button"),
+    downloadProjectButton: document.querySelector("#download-project-button"),
     ideTabs: Array.from(document.querySelectorAll(".ide-tab")),
     codeViewMain: document.querySelector("#code-view-main"),
     codeViewKreis: document.querySelector("#code-view-kreis")
@@ -574,13 +575,16 @@
     lines.push("void setup(){");
     lines.push(`  size(${GRID_SIZE},${GRID_SIZE});`);
 
+    // new Kreis() würfelt Durchmesser und Farbe neu. Damit der Sketch genauso aussieht
+    // wie die Seite, stehen hier die Werte, die tatsächlich gewürfelt wurden.
+    if (state.objects.some((obj) => obj.ctor === "standard")) {
+      lines.push("  // Kreise aus dem Standardkonstruktor stehen hier mit den Werten,");
+      lines.push("  // die beim Erzeugen gewürfelt wurden.");
+    }
+
     state.objects.forEach((obj) => {
-      if (obj.ctor === "standard") {
-        lines.push(`  ${obj.name} = new Kreis();`);
-      } else {
-        const { r, g, b } = obj.farbe;
-        lines.push(`  ${obj.name} = new Kreis(${obj.x},${obj.y},${obj.durchmesser},color(${r},${g},${b}));`);
-      }
+      const { r, g, b } = obj.farbe;
+      lines.push(`  ${obj.name} = new Kreis(${obj.x},${obj.y},${obj.durchmesser},color(${r},${g},${b}));`);
     });
 
     lines.push("}");
@@ -701,6 +705,111 @@
     elements.codeViewKreis.hidden = tabName !== "kreis";
   }
 
+  // --- Projekt als ZIP herunterladen -------------------------------------
+  // Processing verlangt einen Ordner, der genauso heißt wie die Haupt-.pde-Datei.
+  // Das ZIP wird von Hand gebaut (Methode "store", ohne Komprimierung), damit die
+  // Seite ohne externe Bibliothek auskommt.
+
+  const PROJECT_NAME = "AktivierungKlasse10";
+
+  const CRC_TABLE = (() => {
+    const table = new Uint32Array(256);
+
+    for (let i = 0; i < 256; i += 1) {
+      let c = i;
+      for (let k = 0; k < 8; k += 1) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[i] = c >>> 0;
+    }
+
+    return table;
+  })();
+
+  function crc32(bytes) {
+    let c = 0xFFFFFFFF;
+
+    for (let i = 0; i < bytes.length; i += 1) {
+      c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    }
+
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function buildZip(files) {
+    const encoder = new TextEncoder();
+    const u16 = (v) => [v & 0xFF, (v >>> 8) & 0xFF];
+    const u32 = (v) => [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF];
+
+    const now = new Date();
+    const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+    const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+
+    const chunks = [];
+    const eintraege = [];
+    let offset = 0;
+
+    files.forEach((file) => {
+      const nameBytes = encoder.encode(file.name);
+      const dataBytes = encoder.encode(file.text);
+      const crc = crc32(dataBytes);
+      const size = dataBytes.length;
+
+      // 0x0800 = Dateiname und Inhalt sind UTF-8
+      const header = [
+        ...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0),
+        ...u16(dosTime), ...u16(dosDate),
+        ...u32(crc), ...u32(size), ...u32(size),
+        ...u16(nameBytes.length), ...u16(0)
+      ];
+
+      chunks.push(new Uint8Array(header), nameBytes, dataBytes);
+      eintraege.push({ nameBytes, crc, size, offset });
+      offset += header.length + nameBytes.length + size;
+    });
+
+    const zentralStart = offset;
+
+    eintraege.forEach((eintrag) => {
+      const header = [
+        ...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0),
+        ...u16(dosTime), ...u16(dosDate),
+        ...u32(eintrag.crc), ...u32(eintrag.size), ...u32(eintrag.size),
+        ...u16(eintrag.nameBytes.length), ...u16(0), ...u16(0),
+        ...u16(0), ...u16(0), ...u32(0),
+        ...u32(eintrag.offset)
+      ];
+
+      chunks.push(new Uint8Array(header), eintrag.nameBytes);
+      offset += header.length + eintrag.nameBytes.length;
+    });
+
+    chunks.push(new Uint8Array([
+      ...u32(0x06054b50), ...u16(0), ...u16(0),
+      ...u16(eintraege.length), ...u16(eintraege.length),
+      ...u32(offset - zentralStart), ...u32(zentralStart), ...u16(0)
+    ]));
+
+    return new Blob(chunks, { type: "application/zip" });
+  }
+
+  function downloadProject() {
+    const blob = buildZip([
+      { name: `${PROJECT_NAME}/${PROJECT_NAME}.pde`, text: `${buildMainCode()}\n` },
+      { name: `${PROJECT_NAME}/Kreis.pde`, text: `${buildKreisCode()}\n` }
+    ]);
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `${PROJECT_NAME}.zip`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   function openCodeDialog() {
     renderCodeView(elements.codeViewMain, buildMainCode());
     renderCodeView(elements.codeViewKreis, buildKreisCode());
@@ -800,6 +909,7 @@
 
   elements.showCodeButton.addEventListener("click", openCodeDialog);
   elements.closeCodeButton.addEventListener("click", closeCodeDialog);
+  elements.downloadProjectButton.addEventListener("click", downloadProject);
   elements.codeOverlay.addEventListener("click", (event) => {
     if (event.target === elements.codeOverlay) {
       closeCodeDialog();
