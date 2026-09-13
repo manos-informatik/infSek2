@@ -3,7 +3,6 @@
 
   const STORAGE_KEY = "infsek2-oop-kreis-v1";
   const GRID_SIZE = 400;
-  const CENTER = GRID_SIZE / 2;
   const DIAMETER_MIN = 20;
   const DIAMETER_MAX = 120;
   const NAME_PATTERN = /^[A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*$/;
@@ -157,8 +156,8 @@
     return {
       name,
       ctor: "standard",
-      x: CENTER,
-      y: CENTER,
+      x: randomInt(0, GRID_SIZE),
+      y: randomInt(0, GRID_SIZE),
       durchmesser: randomInt(DIAMETER_MIN, DIAMETER_MAX),
       farbe: { r: randomInt(0, 255), g: randomInt(0, 255), b: randomInt(0, 255) }
     };
@@ -607,8 +606,8 @@
   color farbe;
 
   Kreis(){
-    x = width/2;
-    y = height/2;
+    x = int(random(width));
+    y = int(random(height));
     durchmesser = random(${DIAMETER_MIN},${DIAMETER_MAX});
     farbe = color(random(255),random(255),random(255));
   }
