@@ -161,11 +161,15 @@
           <span class="ide-mode" aria-hidden="true">Java</span>
         </div>
 
-        <div class="ide-tabs" role="tablist" aria-label="Klassen">
-          <button class="ide-tab" id="tab-Main" type="button" role="tab" data-tab="Main" aria-selected="false" aria-controls="code-view-Main" tabindex="-1">Main</button>
-          <button class="ide-tab is-active" id="tab-Form" type="button" role="tab" data-tab="Form" aria-selected="true" aria-controls="code-view-Form">Form</button>
-          <button class="ide-tab" id="tab-Kreis" type="button" role="tab" data-tab="Kreis" aria-selected="false" aria-controls="code-view-Kreis" tabindex="-1">Kreis</button>
-          <button class="ide-tab" id="tab-Rechteck" type="button" role="tab" data-tab="Rechteck" aria-selected="false" aria-controls="code-view-Rechteck" tabindex="-1">Rechteck</button>
+        <div class="ide-tabbar">
+          <div class="ide-tabs" role="tablist" aria-label="Klassen">
+            <button class="ide-tab" id="tab-Main" type="button" role="tab" data-tab="Main" aria-selected="false" aria-controls="code-view-Main" tabindex="-1">Main</button>
+            <button class="ide-tab is-active" id="tab-Form" type="button" role="tab" data-tab="Form" aria-selected="true" aria-controls="code-view-Form">Form</button>
+            <button class="ide-tab" id="tab-Kreis" type="button" role="tab" data-tab="Kreis" aria-selected="false" aria-controls="code-view-Kreis" tabindex="-1">Kreis</button>
+            <button class="ide-tab" id="tab-Rechteck" type="button" role="tab" data-tab="Rechteck" aria-selected="false" aria-controls="code-view-Rechteck" tabindex="-1">Rechteck</button>
+          </div>
+
+          <button class="ide-copy" id="copyButton" type="button">Kopieren</button>
         </div>
 
         <div class="ide-editor">
@@ -174,10 +178,6 @@
           <div class="code-view" id="code-view-Kreis" role="tabpanel" aria-labelledby="tab-Kreis" tabindex="0" hidden></div>
           <div class="code-view" id="code-view-Rechteck" role="tabpanel" aria-labelledby="tab-Rechteck" tabindex="0" hidden></div>
         </div>
-      </div>
-
-      <div class="action-row">
-        <button class="btn ghost" id="copyButton" type="button">Kopieren</button>
       </div>
 
       <div class="feedback-box" id="copyFeedback" aria-live="polite" hidden></div>

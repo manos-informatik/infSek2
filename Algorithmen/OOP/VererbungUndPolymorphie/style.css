@@ -660,12 +660,50 @@ h3 {
   font-weight: 700;
 }
 
+/* Reiter links, Kopieren rechts - beide in derselben Leiste, damit der Knopf unter
+   dem Java-Feld sitzt und immer den gerade offenen Reiter meint. */
+.ide-tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  /* rechts derselbe Innenabstand wie in der Werkzeugleiste, damit Kopieren
+     bündig unter dem Java-Feld steht */
+  padding: 0.35rem 0.7rem 0 0.5rem;
+  background: #c9def0;
+}
+
 .ide-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
-  padding: 0.35rem 0.5rem 0;
-  background: #c9def0;
+  min-width: 0;
+}
+
+/* Höhe bewusst auf Reiterhöhe statt auf die sonst üblichen 44px: der Knopf gehört
+   zur Fensterleiste der IDE und soll mit den Reitern auf einer Linie liegen. */
+.ide-copy {
+  margin-left: auto;
+  margin-bottom: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid #8fb2cc;
+  border-radius: 5px;
+  background: #eaf3fa;
+  color: #1a3d55;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.ide-copy:hover {
+  background: #ffffff;
+  border-color: #2d7bb6;
+}
+
+.ide-copy:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 123, 182, 0.55);
 }
 
 .ide-tab {
