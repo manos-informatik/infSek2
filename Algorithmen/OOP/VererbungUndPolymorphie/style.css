@@ -241,6 +241,41 @@ h3 {
   transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
+/* --- Abstrakt: UML schreibt Klassenname und Methode kursiv. Kursiv allein ist ein
+       schwaches Signal, deshalb steht {abstract} als Text daneben. --- */
+.uml-name.is-abstract,
+.uml-compartment li[data-abstract],
+.member.is-abstract .member-sig {
+  font-style: italic;
+}
+
+.uml-name.is-abstract {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.uml-note {
+  margin-left: 0.45rem;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.uml-name .uml-note {
+  margin-left: 0;
+}
+
+.badge-abstract {
+  border-color: var(--muted);
+  background: rgba(168, 181, 199, 0.14);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 /* --- Markierungen: Farbe + eigene Rahmenart, damit nicht nur die Farbe trägt --- */
 .uml-compartment li.is-geerbt,
 .member.is-geerbt {

@@ -53,7 +53,7 @@
       if (typeof daten.selected === "string" && byName.has(daten.selected)) {
         state.selected = daten.selected;
       }
-      if (typeof daten.tab === "string" && byName.has(daten.tab)) {
+      if (typeof daten.tab === "string" && Object.prototype.hasOwnProperty.call(CODE, daten.tab)) {
         state.tab = daten.tab;
       }
     } catch {
@@ -63,13 +63,21 @@
 
   /* --- Members aus dem Diagramm lesen: eine Quelle für Diagramm und Übersicht --- */
 
+  // Die {abstract}-Notiz steht als eigenes Element in der Zeile und gehoert nicht zur Signatur.
+  const signatur = (li) => {
+    const kopie = li.cloneNode(true);
+    kopie.querySelectorAll(".uml-note").forEach((note) => note.remove());
+    return kopie.textContent.trim();
+  };
+
   const readMembers = (node) =>
     Array.from(node.querySelectorAll(".uml-compartment li")).map((li) => ({
       li,
       key: li.dataset.key,
       kind: li.closest(".uml-compartment").dataset.compartment,
       ctor: li.dataset.role === "ctor",
-      sig: li.textContent.trim()
+      abstrakt: li.dataset.abstract === "true",
+      sig: signatur(li)
     }));
 
   const analyse = (name) => {
@@ -87,20 +95,31 @@
       const ueberschrieben = eigene.some((o) => !o.ctor && o.key === m.key);
       marks.set(m.li, ueberschrieben ? "ueber" : "geerbt");
       if (!ueberschrieben) {
-        zeilen.push({ kind: m.kind, sig: m.sig, mark: "geerbt", herkunft: `aus ${oberklasse}` });
+        zeilen.push({
+          kind: m.kind,
+          sig: m.sig,
+          mark: "geerbt",
+          abstrakt: m.abstrakt,
+          herkunft: m.abstrakt ? `aus ${oberklasse}, noch ohne Inhalt` : `aus ${oberklasse}`
+        });
       }
     });
+
+    const abstraktInOberklasse = new Map(geerbte.map((m) => [m.key, m.abstrakt]));
 
     eigene.forEach((m) => {
       const ueberschrieben = !m.ctor && oberKeys.has(m.key);
       const mark = ueberschrieben ? "ueber" : "eigen";
       marks.set(m.li, mark);
-      zeilen.push({
-        kind: m.kind,
-        sig: m.sig,
-        mark,
-        herkunft: ueberschrieben ? `aus ${oberklasse}, hier neu geschrieben` : `nur in ${name}`
-      });
+
+      // In Form ist die Methode nur gefordert - hier bekommt sie zum ersten Mal Inhalt.
+      const herkunft = ueberschrieben
+        ? (abstraktInOberklasse.get(m.key)
+            ? `aus ${oberklasse}, hier ausprogrammiert`
+            : `aus ${oberklasse}, hier neu geschrieben`)
+        : (m.abstrakt ? "nur gefordert, ohne Inhalt" : `nur in ${name}`);
+
+      zeilen.push({ kind: m.kind, sig: m.sig, mark, abstrakt: m.abstrakt, herkunft });
     });
 
     return { zeilen, marks };
@@ -108,10 +127,10 @@
 
   /* --- Anzeige --- */
 
-  const zeileBauen = ({ sig, mark, herkunft }) => {
+  const zeileBauen = ({ sig, mark, herkunft, abstrakt }) => {
     const info = MARK_TEXT[mark];
     const li = document.createElement("li");
-    li.className = `member ${info.css}`;
+    li.className = `member ${info.css}${abstrakt ? " is-abstract" : ""}`;
 
     const badge = document.createElement("span");
     badge.className = "badge";
@@ -130,7 +149,16 @@
     quelle.className = "member-origin";
     quelle.textContent = herkunft;
 
-    li.append(badge, wort, text, quelle);
+    li.append(badge, wort, text);
+
+    if (abstrakt) {
+      const notiz = document.createElement("span");
+      notiz.className = "uml-note";
+      notiz.textContent = "{abstract}";
+      li.append(notiz);
+    }
+
+    li.append(quelle);
     return li;
   };
 
@@ -229,15 +257,39 @@
 
   /* --- Processing-IDE: Reiter, Zeilennummern, Syntaxfarben --- */
 
-  const KEYWORDS = new Set(["class", "extends", "super", "void", "this", "new", "return", "if", "else", "for", "while"]);
+  const KEYWORDS = new Set(["class", "abstract", "extends", "super", "void", "this", "new", "return", "if", "else", "for", "while"]);
   const TYPES = new Set(["int", "float", "color", "boolean"]);
   const BUILTINS = new Set([
-    "fill", "circle", "rect", "println", "PI", "width", "height",
-    "zeichnen", "berechneFlaeche", "berechneUmfang", "farbeAendern"
+    "setup", "draw", "size", "background", "fill", "circle", "rect", "println", "PI",
+    "width", "height", "zeichnen", "berechneFlaeche", "berechneUmfang", "farbeAendern"
   ]);
 
+  /* Pro Reiter steht daneben, welche Zeilen gelb hinterlegt werden - das ist das,
+     worauf die Aufgabe zeigt. */
   const CODE = {
-    Form: `class Form {
+    Main: {
+      schluessel: /Form\[\]|Form f|f\.zeichnen/,
+      text: `Form[] formen = new Form[2];
+
+void setup(){
+  size(400, 400);
+  formen[0] = new Kreis(100, 100, 80, color(34, 211, 238));
+  formen[1] = new Rechteck(200, 200, 140, 90, color(16, 185, 129));
+}
+
+void draw(){
+  background(15, 23, 42);
+
+  // f ist eine Form. Welches zeichnen() läuft, entscheidet das Objekt.
+  for (Form f : formen) {
+    f.zeichnen();
+  }
+}`
+    },
+
+    Form: {
+      schluessel: /\babstract\b/,
+      text: `abstract class Form {
   int x;
   int y;
   color farbe;
@@ -248,21 +300,21 @@
     this.farbe = farbe;
   }
 
-  void zeichnen(){
-  }
+  abstract void zeichnen();
 
-  void berechneFlaeche(){
-  }
+  abstract void berechneFlaeche();
 
-  void berechneUmfang(){
-  }
+  abstract void berechneUmfang();
 
   void farbeAendern(color neueFarbe){
     farbe = neueFarbe;
   }
-}`,
+}`
+    },
 
-    Kreis: `class Kreis extends Form {
+    Kreis: {
+      schluessel: /\bextends\b|\bsuper\s*\(/,
+      text: `class Kreis extends Form {
   float durchmesser;
 
   Kreis(int x, int y, float durchmesser, color farbe){
@@ -282,9 +334,12 @@
   void berechneUmfang(){
     println(PI * durchmesser);
   }
-}`,
+}`
+    },
 
-    Rechteck: `class Rechteck extends Form {
+    Rechteck: {
+      schluessel: /\bextends\b|\bsuper\s*\(/,
+      text: `class Rechteck extends Form {
   int breite;
   int höhe;
 
@@ -307,6 +362,7 @@
     println(2 * breite + 2 * höhe);
   }
 }`
+    }
   };
 
   const highlightLine = (zeile) => {
@@ -349,13 +405,12 @@
     return teile;
   };
 
-  const renderCodeView = (container, code) => {
+  const renderCodeView = (container, { text, schluessel }) => {
     container.replaceChildren();
 
-    code.split("\n").forEach((zeile, i) => {
+    text.split("\n").forEach((zeile, i) => {
       const zeileEl = document.createElement("div");
-      // extends und super(...) sind das, worauf es in dieser Stunde ankommt.
-      zeileEl.className = /\bextends\b|\bsuper\s*\(/.test(zeile) ? "ide-line is-key" : "ide-line";
+      zeileEl.className = schluessel.test(zeile) ? "ide-line is-key" : "ide-line";
 
       const nummer = document.createElement("span");
       nummer.className = "ide-gutter";

@@ -28,7 +28,7 @@
         <div class="uml-tree">
           <div class="uml-top">
             <div class="uml-node" id="node-Form" role="button" tabindex="0" aria-pressed="false" data-class="Form">
-              <p class="uml-name">Form</p>
+              <p class="uml-name is-abstract">Form<span class="uml-note">{abstract}</span></p>
               <ul class="uml-compartment" data-compartment="attribute">
                 <li data-key="x">x : int</li>
                 <li data-key="y">y : int</li>
@@ -36,9 +36,9 @@
               </ul>
               <ul class="uml-compartment" data-compartment="methode">
                 <li data-key="ctor" data-role="ctor">Form(x : int, y : int, farbe : color)</li>
-                <li data-key="zeichnen">zeichnen() : void</li>
-                <li data-key="berechneFlaeche">berechneFlaeche() : void</li>
-                <li data-key="berechneUmfang">berechneUmfang() : void</li>
+                <li data-key="zeichnen" data-abstract="true">zeichnen() : void<span class="uml-note">{abstract}</span></li>
+                <li data-key="berechneFlaeche" data-abstract="true">berechneFlaeche() : void<span class="uml-note">{abstract}</span></li>
+                <li data-key="berechneUmfang" data-abstract="true">berechneUmfang() : void<span class="uml-note">{abstract}</span></li>
                 <li data-key="farbeAendern">farbeAendern(neueFarbe : color) : void</li>
               </ul>
             </div>
@@ -113,10 +113,14 @@
             <span class="badge" aria-hidden="true">E</span>
             <span><b>eigen</b> &ndash; unterschiedlich, gibt es nur in dieser Klasse</span>
           </li>
+          <li class="legend-item is-abstract-hint">
+            <span class="badge badge-abstract" aria-hidden="true">{ }</span>
+            <span><i>kursiv</i> + <b>{abstract}</b> &ndash; nur gefordert, ohne Inhalt</span>
+          </li>
         </ul>
 
         <div class="action-row">
-          <button class="btn ghost hint-bulb" id="hintButton" type="button" aria-label="Hinweis zu Konstruktoren">💡</button>
+          <button class="btn ghost hint-bulb" id="hintButton" type="button" aria-label="Hinweis: Warum ist Form abstrakt?">💡</button>
         </div>
       </article>
 
@@ -148,7 +152,7 @@
         <p class="station-label">Aufgabe 2</p>
         <h2>Java-Code</h2>
       </div>
-      <p class="section-text">Klicke die Reiter durch. Suche <code>extends</code> und <code>super(...)</code> &ndash; beide Zeilen sind gelb hinterlegt.</p>
+      <p class="section-text">Klicke die Reiter durch. Gelb hinterlegt ist, worauf es ankommt: <code>abstract</code> in Form, <code>extends</code> und <code>super(...)</code> in den Unterklassen.</p>
 
       <div class="ide">
         <div class="ide-toolbar">
@@ -158,12 +162,14 @@
         </div>
 
         <div class="ide-tabs" role="tablist" aria-label="Klassen">
+          <button class="ide-tab" id="tab-Main" type="button" role="tab" data-tab="Main" aria-selected="false" aria-controls="code-view-Main" tabindex="-1">Main</button>
           <button class="ide-tab is-active" id="tab-Form" type="button" role="tab" data-tab="Form" aria-selected="true" aria-controls="code-view-Form">Form</button>
           <button class="ide-tab" id="tab-Kreis" type="button" role="tab" data-tab="Kreis" aria-selected="false" aria-controls="code-view-Kreis" tabindex="-1">Kreis</button>
           <button class="ide-tab" id="tab-Rechteck" type="button" role="tab" data-tab="Rechteck" aria-selected="false" aria-controls="code-view-Rechteck" tabindex="-1">Rechteck</button>
         </div>
 
         <div class="ide-editor">
+          <div class="code-view" id="code-view-Main" role="tabpanel" aria-labelledby="tab-Main" tabindex="0" hidden></div>
           <div class="code-view" id="code-view-Form" role="tabpanel" aria-labelledby="tab-Form" tabindex="0"></div>
           <div class="code-view" id="code-view-Kreis" role="tabpanel" aria-labelledby="tab-Kreis" tabindex="0" hidden></div>
           <div class="code-view" id="code-view-Rechteck" role="tabpanel" aria-labelledby="tab-Rechteck" tabindex="0" hidden></div>
@@ -184,8 +190,10 @@
 
   <div id="hintOverlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="hintTitle">
     <div class="overlay-content">
-      <h3 id="hintTitle" class="overlay-title">Warum steht der Konstruktor von Form nicht in der Liste?</h3>
+      <h3 id="hintTitle" class="overlay-title">Warum ist Form abstrakt?</h3>
+      <p class="section-text">Eine Form ohne Angabe, welche Form &ndash; die kann man nicht zeichnen. Deshalb gibt es kein <code>new Form(...)</code>. <code>zeichnen()</code>, <code>berechneFlaeche()</code> und <code>berechneUmfang()</code> sind in Form nur gefordert; jede Unterklasse muss sie schreiben.</p>
       <p class="section-text">Konstruktoren werden nicht vererbt. Jede Unterklasse hat einen eigenen und ruft mit <code>super(x, y, farbe)</code> zuerst den Konstruktor von Form auf.</p>
+
       <div class="action-row">
         <button class="btn ghost" id="hintClose" type="button">Schließen</button>
       </div>
