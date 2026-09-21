@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vererbung: Form, Kreis und Rechteck</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Objektorientierte Programmierung</p>
+      <h1>Vererbung</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="werkzeug" aria-label="Klassendiagramm und Gesamtübersicht">
+
+      <article class="panel diagram-panel">
+        <div class="card-heading">
+          <p class="station-label">Aufgabe 1</p>
+          <h2>Klassendiagramm</h2>
+        </div>
+        <p class="section-text">Klicke auf <b>Kreis</b>, dann auf <b>Rechteck</b>, dann auf <b>Form</b>. Achte darauf, welche Zeilen in <b>Form</b> mitleuchten.</p>
+
+        <div class="uml-tree">
+          <div class="uml-top">
+            <div class="uml-node" id="node-Form" role="button" tabindex="0" aria-pressed="false" data-class="Form">
+              <p class="uml-name">Form</p>
+              <ul class="uml-compartment" data-compartment="attribute">
+                <li data-key="x">x : int</li>
+                <li data-key="y">y : int</li>
+                <li data-key="farbe">farbe : color</li>
+              </ul>
+              <ul class="uml-compartment" data-compartment="methode">
+                <li data-key="ctor" data-role="ctor">Form(x : int, y : int, farbe : color)</li>
+                <li data-key="zeichnen">zeichnen() : void</li>
+                <li data-key="berechneFlaeche">berechneFlaeche() : void</li>
+                <li data-key="berechneUmfang">berechneUmfang() : void</li>
+                <li data-key="farbeAendern">farbeAendern(neueFarbe : color) : void</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="uml-connector" aria-hidden="true">
+            <svg class="uml-tri" width="24" height="16" viewBox="0 0 24 16" focusable="false">
+              <path d="M12 1.4 L22.6 14.6 L1.4 14.6 Z" />
+            </svg>
+            <span class="uml-stem"></span>
+            <span class="uml-bar"></span>
+            <span class="uml-drop left"></span>
+            <span class="uml-drop right"></span>
+          </div>
+
+          <div class="uml-children">
+            <div class="uml-child">
+              <p class="uml-mobile-link">
+                <svg class="uml-tri-small" width="20" height="13" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+                  <path d="M12 1.4 L22.6 14.6 L1.4 14.6 Z" />
+                </svg>
+                erbt von Form
+              </p>
+              <div class="uml-node" id="node-Kreis" role="button" tabindex="0" aria-pressed="false" data-class="Kreis" data-extends="Form">
+                <p class="uml-name">Kreis</p>
+                <ul class="uml-compartment" data-compartment="attribute">
+                  <li data-key="durchmesser">durchmesser : float</li>
+                </ul>
+                <ul class="uml-compartment" data-compartment="methode">
+                  <li data-key="ctor" data-role="ctor">Kreis(x : int, y : int, durchmesser : float, farbe : color)</li>
+                  <li data-key="zeichnen">zeichnen() : void</li>
+                  <li data-key="berechneFlaeche">berechneFlaeche() : void</li>
+                  <li data-key="berechneUmfang">berechneUmfang() : void</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="uml-child">
+              <p class="uml-mobile-link">
+                <svg class="uml-tri-small" width="20" height="13" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+                  <path d="M12 1.4 L22.6 14.6 L1.4 14.6 Z" />
+                </svg>
+                erbt von Form
+              </p>
+              <div class="uml-node" id="node-Rechteck" role="button" tabindex="0" aria-pressed="false" data-class="Rechteck" data-extends="Form">
+                <p class="uml-name">Rechteck</p>
+                <ul class="uml-compartment" data-compartment="attribute">
+                  <li data-key="breite">breite : int</li>
+                  <li data-key="hoehe">höhe : int</li>
+                </ul>
+                <ul class="uml-compartment" data-compartment="methode">
+                  <li data-key="ctor" data-role="ctor">Rechteck(x : int, y : int, breite : int, höhe : int, farbe : color)</li>
+                  <li data-key="zeichnen">zeichnen() : void</li>
+                  <li data-key="berechneFlaeche">berechneFlaeche() : void</li>
+                  <li data-key="berechneUmfang">berechneUmfang() : void</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="legend" aria-label="Legende der Markierungen">
+          <li class="legend-item is-geerbt">
+            <span class="badge" aria-hidden="true">G</span>
+            <span><b>geerbt</b> &ndash; identisch, kommt unverändert aus Form</span>
+          </li>
+          <li class="legend-item is-ueber">
+            <span class="badge" aria-hidden="true">Ü</span>
+            <span><b>überschrieben</b> &ndash; gleicher Name, anderer Inhalt</span>
+          </li>
+          <li class="legend-item is-eigen">
+            <span class="badge" aria-hidden="true">E</span>
+            <span><b>eigen</b> &ndash; unterschiedlich, gibt es nur in dieser Klasse</span>
+          </li>
+        </ul>
+
+        <div class="action-row">
+          <button class="btn ghost hint-bulb" id="hintButton" type="button" aria-label="Hinweis zu Konstruktoren">💡</button>
+        </div>
+      </article>
+
+      <article class="panel detail-panel">
+        <div class="card-heading">
+          <p class="station-label">Ergebnis</p>
+          <h2>Das hat die Klasse insgesamt</h2>
+        </div>
+
+        <p class="class-pill" id="detailClass" hidden></p>
+
+        <div class="pill-row" id="detailCounts" hidden>
+          <span class="status-pill is-geerbt" id="countGeerbt"></span>
+          <span class="status-pill is-ueber" id="countUeber"></span>
+          <span class="status-pill is-eigen" id="countEigen"></span>
+        </div>
+
+        <p class="sr-only" id="liveStatus" aria-live="polite"></p>
+
+        <div class="detail-body" id="detailBody">
+          <p class="empty-hint">Klicke im Diagramm auf eine Klasse.</p>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="panel code-section">
+      <div class="card-heading">
+        <p class="station-label">Aufgabe 2</p>
+        <h2>Java-Code</h2>
+      </div>
+      <p class="section-text">Klicke die Reiter durch. Suche <code>extends</code> und <code>super(...)</code> &ndash; beide Zeilen sind gelb hinterlegt.</p>
+
+      <div class="ide">
+        <div class="ide-toolbar">
+          <span class="ide-icon ide-icon-run" aria-hidden="true"></span>
+          <span class="ide-icon ide-icon-stop" aria-hidden="true"></span>
+          <span class="ide-mode" aria-hidden="true">Java</span>
+        </div>
+
+        <div class="ide-tabs" role="tablist" aria-label="Klassen">
+          <button class="ide-tab is-active" id="tab-Form" type="button" role="tab" data-tab="Form" aria-selected="true" aria-controls="code-view-Form">Form</button>
+          <button class="ide-tab" id="tab-Kreis" type="button" role="tab" data-tab="Kreis" aria-selected="false" aria-controls="code-view-Kreis" tabindex="-1">Kreis</button>
+          <button class="ide-tab" id="tab-Rechteck" type="button" role="tab" data-tab="Rechteck" aria-selected="false" aria-controls="code-view-Rechteck" tabindex="-1">Rechteck</button>
+        </div>
+
+        <div class="ide-editor">
+          <div class="code-view" id="code-view-Form" role="tabpanel" aria-labelledby="tab-Form" tabindex="0"></div>
+          <div class="code-view" id="code-view-Kreis" role="tabpanel" aria-labelledby="tab-Kreis" tabindex="0" hidden></div>
+          <div class="code-view" id="code-view-Rechteck" role="tabpanel" aria-labelledby="tab-Rechteck" tabindex="0" hidden></div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn ghost" id="copyButton" type="button">Kopieren</button>
+      </div>
+
+      <div class="feedback-box" id="copyFeedback" aria-live="polite" hidden></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p>
+  </footer>
+
+  <div id="hintOverlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="hintTitle">
+    <div class="overlay-content">
+      <h3 id="hintTitle" class="overlay-title">Warum steht der Konstruktor von Form nicht in der Liste?</h3>
+      <p class="section-text">Konstruktoren werden nicht vererbt. Jede Unterklasse hat einen eigenen und ruft mit <code>super(x, y, farbe)</code> zuerst den Konstruktor von Form auf.</p>
+      <div class="action-row">
+        <button class="btn ghost" id="hintClose" type="button">Schließen</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

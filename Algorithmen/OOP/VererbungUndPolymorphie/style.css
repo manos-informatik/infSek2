@@ -1,0 +1,800 @@
+:root {
+  color-scheme: dark;
+  --primary: #22d3ee;
+  --secondary: #10b981;
+  --accent: #fbbf24;
+  --danger: #fb7185;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-soft: #253248;
+  --text: #f1f5f9;
+  --muted: #a8b5c7;
+  --border: #334155;
+  --button-dark: #182336;
+  --button-light: #30445c;
+  --button-border: #4b5e7a;
+  --button-text: #dcf4ff;
+  --on-primary: #05202e;
+  --shadow: 0 16px 30px -14px rgba(0, 0, 0, 0.55);
+  --focus: 0 0 0 3px rgba(34, 211, 238, 0.3);
+  --radius: 18px;
+
+  /* themenspezifisch: UML-Linien und Markierungen */
+  --uml-line: #8397ad;
+  --uml-gap: 1rem;
+  /* Farbkonvention aus der Vorstunde: gruen = identisch, blau = gleicher Name mit
+     anderem Inhalt, rot = unterschiedlich. */
+  --mark-geerbt: var(--secondary);
+  --mark-ueber: #60a5fa;
+  --mark-eigen: var(--danger);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Muss stehenbleiben: eigene display-Angaben würden das eingebaute
+   [hidden]-Verhalten des Browsers sonst überstimmen. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+  color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(100, 116, 139, 0.45) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(100, 116, 139, 0.35) 1px, transparent 1px),
+    radial-gradient(circle at 88% 16%, rgba(16, 185, 129, 0.18), transparent 22%),
+    radial-gradient(circle at 8% 10%, rgba(34, 211, 238, 0.16), transparent 24%);
+  background-size: 44px 44px, 44px 44px, auto, auto;
+  background-position: 0 0, 22px 22px, center, center;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Rahmenmaße --- */
+.hero-inner, .container, .footer {
+  width: min(1240px, 100% - 2rem);
+  margin: 0 auto;
+}
+
+.hero {
+  padding: 2.2rem 1.25rem 1.1rem;
+}
+
+.hero-inner {
+  padding: 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(170deg, rgba(30, 41, 59, 0.96), rgba(37, 50, 72, 0.95));
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.35rem 0 0;
+  color: var(--primary);
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.22);
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #d9f8ff;
+}
+
+.section-text {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 68ch;
+}
+
+.section-text code, .overlay-content code {
+  padding: 0.05rem 0.28rem;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #a7f3d0;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.92em;
+}
+
+.station-label {
+  margin: 0 0 0.15rem;
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* --- Karten --- */
+.container {
+  padding-bottom: 2rem;
+}
+
+.panel {
+  min-width: 0;
+  padding: 1.1rem 1.1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(175deg, var(--surface), var(--surface-soft));
+  box-shadow: var(--shadow);
+}
+
+.werkzeug {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.diagram-panel, .detail-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.code-section {
+  margin-top: 1.2rem;
+}
+
+/* --- UML-Baum --- */
+.uml-tree {
+  margin-top: 1.1rem;
+}
+
+.uml-top {
+  display: flex;
+  justify-content: center;
+}
+
+.uml-top .uml-node {
+  width: min(360px, 100%);
+}
+
+.uml-node {
+  min-width: 0;
+  border: 1px solid var(--uml-line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.62);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.uml-node:hover {
+  transform: translateY(-1px);
+  border-color: rgba(34, 211, 238, 0.7);
+}
+
+.uml-node:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.uml-node.is-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary), 0 0 22px rgba(34, 211, 238, 0.24);
+}
+
+.uml-name {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  font-weight: 800;
+  color: #d9f8ff;
+  background: rgba(37, 50, 72, 0.9);
+  border-bottom: 1px solid var(--uml-line);
+}
+
+.uml-compartment {
+  margin: 0;
+  padding: 0.35rem 0.4rem;
+  list-style: none;
+}
+
+.uml-compartment + .uml-compartment {
+  border-top: 1px solid var(--uml-line);
+}
+
+.uml-compartment li {
+  padding: 0.18rem 0.35rem;
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+/* --- Markierungen: Farbe + eigene Rahmenart, damit nicht nur die Farbe trägt --- */
+.uml-compartment li.is-geerbt,
+.member.is-geerbt {
+  border-left-style: solid;
+  border-left-color: var(--mark-geerbt);
+  background: rgba(16, 185, 129, 0.16);
+  color: #b9f8dc;
+}
+
+.uml-compartment li.is-ueber,
+.member.is-ueber {
+  border-left-style: dashed;
+  border-left-color: var(--mark-ueber);
+  background: rgba(96, 165, 250, 0.18);
+  color: #d4e6ff;
+}
+
+.uml-compartment li.is-eigen,
+.member.is-eigen {
+  border-left-style: dotted;
+  border-left-color: var(--mark-eigen);
+  background: rgba(251, 113, 133, 0.16);
+  color: #fecdd3;
+}
+
+/* --- Verbinder mit UML-Vererbungspfeil (hohle Dreiecksspitze) --- */
+.uml-connector {
+  position: relative;
+  height: 64px;
+}
+
+.uml-tri {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.uml-tri path, .uml-tri-small path {
+  fill: var(--bg);
+  stroke: var(--uml-line);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.uml-stem, .uml-bar, .uml-drop {
+  position: absolute;
+  background: var(--uml-line);
+}
+
+.uml-stem {
+  top: 15px;
+  left: 50%;
+  width: 2px;
+  height: 19px;
+  transform: translateX(-50%);
+}
+
+/* Die Mitte einer Kindspalte liegt bei (100% - Abstand) / 4, nicht bei 25%:
+   der Gitterabstand schiebt sie um ein Viertel seiner Breite nach innen. */
+.uml-bar {
+  top: 33px;
+  left: calc((100% - var(--uml-gap)) / 4);
+  right: calc((100% - var(--uml-gap)) / 4);
+  height: 2px;
+}
+
+.uml-drop {
+  top: 33px;
+  width: 2px;
+  height: 31px;
+  transform: translateX(-50%);
+}
+
+.uml-drop.left {
+  left: calc((100% - var(--uml-gap)) / 4);
+}
+
+.uml-drop.right {
+  left: calc(100% - (100% - var(--uml-gap)) / 4);
+}
+
+.uml-children {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--uml-gap);
+}
+
+.uml-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.uml-child .uml-node {
+  flex: 1;
+}
+
+.uml-mobile-link {
+  display: none;
+  margin: 0 0 0.4rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* --- Legende --- */
+.legend {
+  margin: 1.1rem 0 0;
+  padding: 0.7rem 0.8rem;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 6px;
+  border: 1px solid;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.is-geerbt .badge {
+  border-color: var(--mark-geerbt);
+  background: rgba(16, 185, 129, 0.2);
+  color: #b9f8dc;
+}
+
+.is-ueber .badge {
+  border-color: var(--mark-ueber);
+  background: rgba(96, 165, 250, 0.22);
+  color: #d4e6ff;
+}
+
+.is-eigen .badge {
+  border-color: var(--mark-eigen);
+  background: rgba(251, 113, 133, 0.2);
+  color: #fecdd3;
+}
+
+/* --- Ergebnis-Karte --- */
+.class-pill {
+  align-self: flex-start;
+  margin: 0.8rem 0 0;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid rgba(34, 211, 238, 0.55);
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.12);
+  color: #bdf0fb;
+  font-weight: 800;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.status-pill {
+  padding: 0.22rem 0.7rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.status-pill.is-geerbt {
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #b9f8dc;
+}
+
+.status-pill.is-ueber {
+  border-color: rgba(96, 165, 250, 0.65);
+  color: #d4e6ff;
+}
+
+.status-pill.is-eigen {
+  border-color: rgba(251, 113, 133, 0.65);
+  color: #fecdd3;
+}
+
+.detail-body {
+  flex: 1;
+  margin-top: 0.9rem;
+}
+
+/* Solange nichts gewählt ist, ist diese Karte die niedrigere - Hinweis mittig setzen,
+   damit unten kein leerer Streifen bleibt. */
+.detail-body.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-hint {
+  margin: 0;
+  padding: 1.1rem 0.9rem;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.member-group + .member-group {
+  margin-top: 1rem;
+}
+
+.member-group h3 {
+  margin-bottom: 0.4rem;
+}
+
+.member-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.member {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.member-sig {
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.member-origin {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(34, 211, 238, 0.6);
+  border-radius: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--on-primary);
+  background: linear-gradient(165deg, var(--primary), #17afc8);
+  transition: transform 150ms ease, filter 150ms ease, opacity 150ms ease;
+}
+
+.btn.ghost {
+  color: var(--button-text);
+  background: linear-gradient(165deg, var(--button-dark), var(--button-light));
+  border-color: var(--button-border);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.button-small {
+  min-height: 36px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+.hint-bulb {
+  min-width: 44px;
+  padding: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+/* --- Processing-IDE-Look (helles Editorfenster, wie in der IDE) --- */
+.ide {
+  margin-top: 0.9rem;
+  overflow: hidden;
+  border: 1px solid #7ea6c4;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.ide-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: #c9def0;
+  border-bottom: 1px solid #a8c6de;
+}
+
+.ide-icon {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #2d7bb6;
+}
+
+.ide-icon-run::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 0.32rem 0 0.32rem 0.5rem;
+  border-color: transparent transparent transparent #ffffff;
+}
+
+.ide-icon-stop::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+}
+
+.ide-mode {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #8fb2cc;
+  border-radius: 4px;
+  background: #eaf3fa;
+  color: #1a3d55;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.ide-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 0.35rem 0.5rem 0;
+  background: #c9def0;
+}
+
+.ide-tab {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #a8c6de;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  background: #b4d2e8;
+  color: #14344a;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ide-tab.is-active {
+  background: #ffffff;
+  color: #0d2433;
+}
+
+.ide-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 123, 182, 0.55);
+}
+
+.ide-editor {
+  max-height: 60vh;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.code-view {
+  padding: 0.5rem 0;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.code-view:focus-visible {
+  outline: 2px solid #2d7bb6;
+  outline-offset: -2px;
+}
+
+.ide-line {
+  display: flex;
+  align-items: flex-start;
+  white-space: pre;
+}
+
+.ide-gutter {
+  flex: 0 0 2.6rem;
+  padding-right: 0.6rem;
+  border-right: 1px solid #dbe6ee;
+  color: #8aa0b0;
+  text-align: right;
+  user-select: none;
+}
+
+.ide-code {
+  padding-left: 0.8rem;
+  color: #10202b;
+}
+
+/* Gelb bleibt "schau hier hin" und ist keine der drei Markierungsfarben. */
+.ide-line.is-key .ide-code {
+  background: rgba(251, 191, 36, 0.42);
+}
+
+/* Syntaxfarben, angelehnt an die Processing-IDE */
+.tok-keyword { color: #33997e; }
+.tok-type { color: #e2661a; }
+.tok-function { color: #006699; font-weight: 700; }
+.tok-number { color: #2d7bb6; }
+.tok-comment { color: #7e7e7e; font-style: italic; }
+
+/* --- Rückmeldungen --- */
+.feedback-box {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.66);
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 0.88rem;
+}
+
+.feedback-box.success { border-color: rgba(16, 185, 129, 0.75); color: #b9f8dc; }
+.feedback-box.error   { border-color: rgba(251, 113, 133, 0.82); color: #fecdd3; }
+
+/* --- Modal --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay-content {
+  width: min(600px, calc(100% - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 24px;
+  background: linear-gradient(175deg, var(--surface), var(--surface-soft));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  transform: scale(0.95);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.overlay.is-visible .overlay-content {
+  transform: scale(1);
+}
+
+.overlay-title {
+  margin: 0 0 12px;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+/* --- Footer --- */
+.footer {
+  text-align: center;
+  padding-bottom: 1.8rem;
+  color: #a6b7cc;
+}
+
+/* --- Mobil --- */
+@media (max-width: 980px) {
+  .werkzeug {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .uml-connector {
+    display: none;
+  }
+
+  .uml-children {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.2rem;
+    margin-top: 1.2rem;
+  }
+
+  .uml-mobile-link {
+    display: flex;
+  }
+
+  .member-origin {
+    margin-left: 0;
+    white-space: normal;
+  }
+}
