@@ -21,6 +21,9 @@ der Konsole wie in Processing. Die Seite wird über ein iframe in Logseq eingebu
      ersetzen: ein Block pro `.pde`-Datei, der Hauptsketch zuerst, danach die übrigen
      Dateien alphabetisch (wie die Reiter in Processing). `data-tab` ist der Dateiname ohne
      `.pde`. Der Code steht bündig am linken Rand, damit die Einrückung stimmt.
+   - `data-hervorheben` an `<section class="ide">`: Wörter, die neu sind und im Code gelb
+     markiert werden sollen, mit Leerzeichen getrennt (z. B. `"extends super"` bei
+     Vererbung). Nicht klar, was neu ist? Nachfragen. Nichts markieren: Attribut leer lassen.
 3. In der `script.js` nur `STORAGE_KEY` anpassen: `infsek2-oop-beispiel<thema>-v1`.
 4. `style.css` bleibt unverändert.
 5. Testen (siehe unten), nicht committen, nicht pushen.
@@ -52,7 +55,7 @@ Processing-Look auf dem dunklen Haus-Hintergrund):
 |---|---|
 | Werkzeugleiste | runder ▶-Knopf (Ausführen), runder ■-Knopf (Stopp), rechts `Projekt-Downloaden`, daneben das Feld `Java` |
 | Reiterzeile | ein Reiter pro Datei (Monospace), rechts `Kopieren`, bündig unter `Java` |
-| Editor | Zeilennummern, Syntaxfarben wie Processing, nur lesbar, feste Höhe |
+| Editor | Zeilennummern, Syntaxfarben wie Processing, nur lesbar, feste Höhe; das Neue (`data-hervorheben`) gelb hinterlegt und fett |
 | Meldungsleiste | Hinweis vor dem ersten Start, Rückmeldungen, Fehler rot |
 | Konsole | schwarz, weiße Monospace-Schrift, Fehler in Rot |
 | Konsolenreiter | `Konsole` (aktiv) / `Fehler`, nur Deko |

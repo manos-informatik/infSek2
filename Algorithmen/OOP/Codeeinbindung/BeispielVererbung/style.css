@@ -301,6 +301,14 @@ button {
 .tok-number   { color: var(--ide-blue); }
 .tok-comment  { color: #7e7e7e; font-style: italic; }
 
+/* Das Neue der Stunde (data-hervorheben): Gelb heißt „schau hier hin“, wie auf VererbungUndPolymorphie */
+.is-neu {
+  border-radius: 3px;
+  background: rgba(251, 191, 36, 0.42);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.42);
+  font-weight: 700;
+}
+
 /* Meldungsleiste zwischen Editor und Konsole */
 .ide-message {
   flex: none;

@@ -118,6 +118,9 @@
     return null;
   };
 
+  /* Das Neue der Stunde, gelb markiert - festgelegt in index.html über data-hervorheben */
+  const HERVORHEBEN = new Set((document.getElementById("ide").dataset.hervorheben || "").split(/\s+/).filter(Boolean));
+
   /* Zeilen als Liste von { text, klasse } - Blockkommentare dürfen Zeilen überspannen */
   const baueZeilen = (tokens) => {
     const zeilen = [[]];
@@ -125,7 +128,9 @@
 
     tokens.forEach((token) => {
       const index = sichtbar.indexOf(token);
-      const klasse = index >= 0 ? tokenKlasse(token, sichtbar[index + 1]) : null;
+      const farbe = index >= 0 ? tokenKlasse(token, sichtbar[index + 1]) : null;
+      const neu = token.typ === "wort" && HERVORHEBEN.has(token.text) ? "is-neu" : null;
+      const klasse = [farbe, neu].filter(Boolean).join(" ") || null;
 
       token.text.split("\n").forEach((teil, i) => {
         if (i > 0) zeilen.push([]);
