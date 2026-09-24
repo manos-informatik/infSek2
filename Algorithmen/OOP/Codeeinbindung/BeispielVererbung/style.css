@@ -441,10 +441,9 @@ button {
   background: #cccccc;
 }
 
+/* Anzeigegröße setzt script.js (große Sketche werden maßstabsgetreu verkleinert) */
 .sketch-canvas {
   display: block;
-  max-width: min(70vw, 400px);
-  height: auto;
 }
 
 /* --- Footer --- */

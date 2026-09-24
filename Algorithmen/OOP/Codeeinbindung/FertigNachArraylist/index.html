@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArrayListFertig – ArrayList</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    /* Im iframe (z. B. in Logseq) füllt die IDE den ganzen Rahmen. Steht im head,
+       damit das Layout nicht springt. ?embed=1 bzw. ?embed=0 erzwingt es. */
+    (() => {
+      const wunsch = new URLSearchParams(location.search).get("embed");
+      let imRahmen = true;
+      try { imRahmen = window.self !== window.top; } catch { /* fremder Rahmen */ }
+      if (wunsch === "1" || (wunsch !== "0" && imRahmen)) {
+        document.documentElement.classList.add("is-embedded");
+      }
+    })();
+  </script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <main class="container">
+    <!-- data-hervorheben: Wörter, die im Code gelb markiert werden (das Neue der Stunde).
+         Mit Punkt davor (.size) nur als Methodenaufruf: formen.size(), nicht size(800, 600) -->
+    <section class="ide" id="ide" aria-label="Processing-Simulation" data-hervorheben="ArrayList .add .get .size">
+      <div class="ide-toolbar">
+        <button class="ide-button" id="runButton" type="button" title="Ausführen" aria-label="Ausführen">
+          <span class="ide-icon ide-icon-run" aria-hidden="true"></span>
+        </button>
+        <button class="ide-button" id="stopButton" type="button" title="Stopp" aria-label="Stopp" disabled>
+          <span class="ide-icon ide-icon-stop" aria-hidden="true"></span>
+        </button>
+        <button class="ide-text-button ide-download" id="downloadButton" type="button">Projekt-Downloaden</button>
+        <span class="ide-mode" aria-hidden="true">Java</span>
+      </div>
+
+      <div class="ide-tabbar">
+        <div class="ide-tabs" id="ideTabs" role="tablist" aria-label="Dateien des Sketches"></div>
+        <button class="ide-text-button ide-copy" id="copyButton" type="button">Kopieren</button>
+      </div>
+
+      <div class="ide-editor" id="ideEditor">
+        <div class="code-view" id="codeView" role="tabpanel" tabindex="0"></div>
+      </div>
+
+      <p class="ide-message" id="ideMessage" aria-live="polite">Klicke auf ▶, um den Sketch zu starten.</p>
+
+      <div class="ide-console" id="ideConsole" role="log" aria-label="Konsole" tabindex="0"></div>
+
+      <div class="ide-console-tabs" aria-hidden="true">
+        <span class="ide-console-tab is-active">Konsole</span>
+        <span class="ide-console-tab">Fehler</span>
+      </div>
+
+      <div class="sketch-window" id="sketchWindow" hidden>
+        <div class="sketch-titlebar" id="sketchTitlebar">
+          <span class="sketch-title" id="sketchTitle"></span>
+          <button class="sketch-close" id="sketchClose" type="button" title="Schließen" aria-label="Sketch-Fenster schließen">✕</button>
+        </div>
+        <div class="sketch-body">
+          <canvas class="sketch-canvas" id="sketchCanvas" width="100" height="100"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p>
+  </footer>
+
+  <!-- Quelltext des Sketches: ein Block pro Reiter, der erste ist der Hauptreiter.
+       Die Seite zeigt genau diesen Text an und führt ihn beim Klick auf ▶ aus. -->
+<script type="text/x-processing" data-tab="ArrayListFertig">
+ArrayList<Form> formen = new ArrayList<Form>();
+
+void setup() {
+  size(800, 600);
+
+  formen.add(new Kreis());
+  formen.add(new Kreis());
+  formen.add(new Kreis(150, 150, 100, color(230, 80, 80)));
+  formen.add(new Kreis(400, 150, 80, color(80, 130, 230)));
+  formen.add(new Kreis(650, 150, 120));
+  formen.add(new Rechteck());
+  formen.add(new Rechteck(400, 400, 200, 100, color(80, 190, 120)));
+  formen.add(new Kreis());
+  formen.add(new Kreis());
+
+}
+
+void draw() {
+  background(255);
+
+  for (int i = 0; i < formen.size(); i++) {
+    formen.get(i).zeichnen();
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Form">
+class Form {
+  int x;
+  int y;
+  color farbe;
+
+  Form() {
+    x = int(random(width));
+    y = int(random(height));
+    farbe = color(random(255), random(255), random(255));
+  }
+
+  Form(int x, int y, color farbe) {
+    this.x = x;
+    this.y = y;
+    this.farbe = farbe;
+  }
+
+  // Die allgemeine Form wird als Punkt dargestellt.
+  void zeichnen() {
+    println("Form ist kein geometrisches Objekt und kann demnach nicht gezeichnet werden.");
+  }
+
+  void berechneFlaeche() {
+    println("Form ist kein geometrisches Objekt und hat demnach keine Flaeche.");
+  }
+
+  void berechneUmfang() {
+    println("Form ist kein geometrisches Objekt und hat demnach keinen Umfang.");
+  }
+  
+  int getX() {
+   return x; 
+  }
+  
+  int getY() {
+   return y; 
+  }
+  
+  void setXY(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Kreis">
+class Kreis extends Form {
+  float durchmesser;
+
+  Kreis() {
+    super();
+    durchmesser = random(20, 120);
+
+    berechneFlaeche();
+    berechneUmfang();
+  }
+
+  Kreis(int x, int y, float durchmesser, color farbe) {
+    super(x, y, farbe);
+    this.durchmesser = durchmesser;
+
+    berechneFlaeche();
+    berechneUmfang();
+  }
+
+  Kreis(int x, int y, float durchmesser) {
+    super(x, y, color(random(255), random(255), random(255)));
+    this.durchmesser = durchmesser;
+
+    berechneFlaeche();
+    berechneUmfang();
+  }
+  
+  @Override
+  void zeichnen() {
+    fill(farbe);
+    circle(x, y, durchmesser);
+  }
+  @Override
+  void berechneFlaeche() {
+    float radius = durchmesser / 2;
+    float flaeche = PI * radius * radius;
+    println("Flaeche des Kreises: " + flaeche);
+  }
+  @Override
+  void berechneUmfang() {
+    float umfang = PI * durchmesser;
+    println("Umfang des Kreises: " + umfang);
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Rechteck">
+class Rechteck extends Form {
+  int breite;
+  int höhe;
+
+  Rechteck() {
+    super();
+    breite = int(random(20, 160));
+    höhe = int(random(20, 160));
+
+    berechneFlaeche();
+    berechneUmfang();
+  }
+
+  Rechteck(int x, int y, int breite, int höhe, color farbe) {
+    super(x, y, farbe);
+    this.breite = breite;
+    this.höhe = höhe;
+
+    berechneFlaeche();
+    berechneUmfang();
+  }
+  @Override
+  void zeichnen() {
+    fill(farbe);
+    rectMode(CENTER);
+    rect(x, y, breite, höhe);
+  }
+  @Override
+  void berechneFlaeche() {
+    int flaeche = breite * höhe;
+    println("Flaeche des Rechtecks: " + flaeche);
+  }
+  @Override
+  void berechneUmfang() {
+    int umfang = 2 * (breite + höhe);
+    println("Umfang des Rechtecks: " + umfang);
+  }
+}
+</script>
+</body>
+</html>

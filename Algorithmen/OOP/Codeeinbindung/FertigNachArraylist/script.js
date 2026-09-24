@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "infsek2-oop-beispielvererbung-v1";
+  const STORAGE_KEY = "infsek2-oop-fertignacharraylist-v1";
 
   /* =====================================================================
      Quelltext

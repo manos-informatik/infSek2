@@ -33,16 +33,22 @@
   const STRUKTUR = new Set(["setup", "draw", "settings"]);
   const EINGEBAUTE_NAMEN = new Set([
     "println", "print", "printArray", "noLoop", "loop", "frameRate", "exit", "size", "background",
-    "color", "abs", "min", "max", "round", "floor", "ceil", "sqrt", "pow", "random", "int", "float", "str"
+    "color", "abs", "min", "max", "round", "floor", "ceil", "sqrt", "pow", "random", "int", "float", "str",
+    "fill", "noFill", "stroke", "noStroke", "strokeWeight", "rectMode", "ellipseMode",
+    "rect", "square", "ellipse", "circle", "line", "point", "triangle", "text", "textSize"
   ]);
   /* Gibt es in Processing, kann diese Simulation aber nicht zeichnen */
   const ZEICHENFUNKTIONEN = new Set([
-    "rect", "square", "ellipse", "circle", "line", "point", "triangle", "quad", "arc", "text",
-    "textSize", "textAlign", "fill", "noFill", "stroke", "noStroke", "strokeWeight", "image",
-    "loadImage", "translate", "rotate", "scale", "push", "pop", "pushMatrix", "popMatrix",
-    "beginShape", "vertex", "endShape", "rectMode", "ellipseMode", "colorMode"
+    "quad", "arc", "textAlign", "image", "loadImage", "translate", "rotate", "scale", "push", "pop",
+    "pushMatrix", "popMatrix", "beginShape", "vertex", "endShape", "colorMode"
   ]);
-  const BEKANNTE_KLASSEN = new Set(["ArrayList", "HashMap", "PVector", "PImage", "PFont", "IntList", "FloatList", "StringList", "Table"]);
+  /* Konstanten von Processing */
+  const KONSTANTEN = new Map([
+    ["PI", Math.PI], ["HALF_PI", Math.PI / 2], ["QUARTER_PI", Math.PI / 4], ["TWO_PI", Math.PI * 2], ["TAU", Math.PI * 2],
+    ["CORNER", 0], ["CORNERS", 1], ["RADIUS", 2], ["CENTER", 3]
+  ]);
+  const TYP_FARBE = new Set([...TYPEN, "ArrayList"]);
+  const BEKANNTE_KLASSEN = new Set(["HashMap", "PVector", "PImage", "PFont", "IntList", "FloatList", "StringList", "Table"]);
   const OBJEKT_METHODEN = new Set(["toString", "equals"]);
   const STANDARD_HINTERGRUND = "#cccccc"; // background(204) - so öffnet Processing jedes Sketch-Fenster
 
@@ -111,7 +117,7 @@
     if (token.typ === "zahl") return "tok-number";
     if (token.typ !== "wort") return null;
     if (SCHLUESSELWOERTER.has(token.text)) return "tok-keyword";
-    if (TYPEN.has(token.text) && !(naechstes && naechstes.text === "(")) return "tok-type";
+    if (TYP_FARBE.has(token.text) && !(naechstes && naechstes.text === "(")) return "tok-type";
     if (naechstes && naechstes.text === "(") {
       if (STRUKTUR.has(token.text)) return "tok-function";
       if (EINGEBAUTE_NAMEN.has(token.text) || ZEICHENFUNKTIONEN.has(token.text)) return "tok-builtin";
@@ -130,7 +136,10 @@
     tokens.forEach((token) => {
       const index = sichtbar.indexOf(token);
       const farbe = index >= 0 ? tokenKlasse(token, sichtbar[index + 1]) : null;
-      const neu = (token.typ === "wort" || token.typ === "annotation") && HERVORHEBEN.has(token.text) ? "is-neu" : null;
+      // ".size" markiert nur Methodenaufrufe wie formen.size(), nicht Processings size(800, 600)
+      const nachPunkt = index > 0 && sichtbar[index - 1].text === ".";
+      const markiert = HERVORHEBEN.has(token.text) || (nachPunkt && HERVORHEBEN.has(`.${token.text}`));
+      const neu = (token.typ === "wort" || token.typ === "annotation") && markiert ? "is-neu" : null;
       const klasse = [farbe, neu].filter(Boolean).join(" ") || null;
 
       token.text.split("\n").forEach((teil, i) => {
@@ -203,14 +212,28 @@
       return t;
     };
 
+    /* <Form> hinter ArrayList; mit leer = true auch <> (new ArrayList<>()) */
+    const typArgument = (t, leer) => {
+      if (t.text !== "ArrayList") throw new SketchFehler(`„${t.text}<…>“ kann diese Simulation nicht ausführen.`, t);
+      erwarte("<");
+      if (leer && nimm(">")) return "";
+      const element = typ();
+      if (INT_TYPEN.has(element) || FLOAT_TYPEN.has(element) || element === "boolean" || element === "char") {
+        throw new SketchFehler(`„ArrayList<${element}>“ geht in Java nicht – dort braucht es eine Klasse, z. B. Integer.`, t);
+      }
+      if (ist(",")) throw new SketchFehler("ArrayList hat nur einen Typ in < >.", t);
+      erwarte(">");
+      return element;
+    };
+
     const typ = () => {
       const t = sieh();
       if (t.typ !== "wort" || (SCHLUESSELWOERTER.has(t.text) && t.text !== "void")) {
         throw new SketchFehler(`Syntaxfehler – Typ erwartet, aber „${t.text || "Dateiende"}“ gefunden.`, t.typ === "ende" ? liste[pos - 1] : t);
       }
       pos += 1;
-      if (ist("<")) throw new SketchFehler(`„${t.text}<…>“ kann diese Simulation nicht ausführen.`, t);
       let text = t.text;
+      if (ist("<")) text += `<${typArgument(t, false)}>`;
       while (ist("[") && ist("]", 1)) {
         pos += 2;
         text += "[]";
@@ -410,7 +433,10 @@
         throw new SketchFehler(`Syntaxfehler – nach „new“ fehlt der Klassenname.`, t);
       }
       pos += 1;
-      if (ist("<")) throw new SketchFehler(`„${k.text}<…>“ kann diese Simulation nicht ausführen.`, k);
+      if (ist("<")) {
+        const element = typArgument(k, true);
+        return { art: "neu", klasse: k.text, element, args: argumente(), token: k };
+      }
       if (nimm("[")) {
         if (nimm("]")) {
           if (ist("[")) throw new SketchFehler("Mehrdimensionale Arrays kann diese Simulation nicht ausführen.", k);
@@ -758,7 +784,20 @@
     }
   }
 
-  const istZahl = (w) => typeof w === "number" || w instanceof Kommazahl;
+  /* ArrayList<elementTyp>; elementTyp "" bei new ArrayList<>(), dann gilt der deklarierte Typ */
+  class Liste {
+    constructor(elementTyp) {
+      this.elementTyp = elementTyp;
+      this.werte = [];
+    }
+  }
+
+  const listenElement = (typ) => {
+    const treffer = /^ArrayList<(.+)>$/.exec(typ || "");
+    return treffer ? treffer[1] : null;
+  };
+
+  const istZahl =(w) => typeof w === "number" || w instanceof Kommazahl;
   const zahl = (w) => (w instanceof Kommazahl ? w.wert : w);
 
   const standardwert = (typ) => {
@@ -776,6 +815,7 @@
     if (w instanceof Kommazahl) return "float";
     if (typeof w === "string") return "String";
     if (w instanceof Reihung) return `${w.elementTyp}[]`;
+    if (w instanceof Liste) return w.elementTyp ? `ArrayList<${w.elementTyp}>` : "ArrayList";
     if (w instanceof Objekt) return w.klasse.name;
     return "void";
   };
@@ -863,6 +903,7 @@
       if (w instanceof Reihung) {
         return `[${REIHUNG_KUERZEL[w.elementTyp] || `L${klassenPfad(w.elementTyp)};`}@${w.hash}`;
       }
+      if (w instanceof Liste) return `[${w.werte.map(javaText).join(", ")}]`;
       if (w instanceof Objekt) {
         const m = findeMethode(w.klasse, "toString", 0, false);
         return m ? javaText(fuehreAus(m, w, [], m.token)) : standardText(w);
@@ -894,6 +935,14 @@
         if (w instanceof Reihung) {
           const k = programm.klassen.get(w.elementTyp);
           if (w.elementTyp === element || (k && istUnterklasse(k, element))) return w;
+        }
+      } else if (typ === "ArrayList" || listenElement(typ)) {
+        // Generics prüft Java streng: ArrayList<Kreis> ist keine ArrayList<Form>
+        const element = listenElement(typ);
+        if (w === null) return w;
+        if (w instanceof Liste) {
+          if (w.elementTyp === "" && element) w.elementTyp = element;
+          if (!element || !w.elementTyp || w.elementTyp === element) return w;
         }
       } else if (programm.klassen.has(typ)) {
         if (w === null || (w instanceof Objekt && istUnterklasse(w.klasse, typ))) return w;
@@ -939,7 +988,7 @@
           return e ? e.typ : null;
         }
         case "this": return r.klasse ? r.klasse.name : null;
-        case "neu": return a.klasse;
+        case "neu": return a.element ? `${a.klasse}<${a.element}>` : a.klasse;
         case "cast": return a.typ;
         case "feld": {
           const k = klasseVon(statischerTyp(a.ziel, r));
@@ -955,7 +1004,13 @@
           let m = null;
           if (a.ziel === null) m = (r.klasse && findeMethode(r.klasse, a.name, n, true)) || findeFunktion(a.name, n);
           else if (a.ziel.art === "super") m = r.klasse && findeMethode(r.klasse.oberklasse, a.name, n, true);
-          else m = findeMethode(klasseVon(statischerTyp(a.ziel, r)), a.name, n, true);
+          else {
+            const zielTyp = statischerTyp(a.ziel, r);
+            // formen.get(i) hat den Typ, der in ArrayList<…> steht
+            const element = listenElement(zielTyp);
+            if (element && (a.name === "get" || a.name === "remove") && n === 1) return element;
+            m = findeMethode(klasseVon(zielTyp), a.name, n, true);
+          }
           return m ? m.typ : null;
         }
         default: return null;
@@ -1120,6 +1175,14 @@
     };
 
     const erzeuge = (a, r) => {
+      if (a.klasse === "ArrayList" && !programm.klassen.has("ArrayList")) {
+        const args = werteListe(a.args, r);
+        if (args.length > 1 || (args.length === 1 && typeof args[0] !== "number")) {
+          throw new SketchFehler("„new ArrayList(…)“ erwartet hier keine oder eine Zahl in der Klammer.", a.token);
+        }
+        return new Liste(a.element === undefined ? null : a.element);
+      }
+
       const k = programm.klassen.get(a.klasse);
       if (!k) {
         if (BEKANNTE_KLASSEN.has(a.klasse)) throw nichtUnterstuetzt(a.token);
@@ -1181,6 +1244,10 @@
           if (a.name === "width") return lauf.breite;
           if (a.name === "height") return lauf.hoehe;
           if (a.name === "frameCount") return lauf.frameCount;
+          if (KONSTANTEN.has(a.name)) {
+            const k = KONSTANTEN.get(a.name);
+            return Number.isInteger(k) ? k : new Kommazahl(k); // PI & Co. sind in Processing float
+          }
           throw new SketchFehler(`Die Variable „${a.name}“ existiert nicht.`, a.token);
         }
         case "this":
@@ -1278,6 +1345,46 @@
       }
     };
 
+    const listenMethode = (liste, a, args) => {
+      const t = a.token;
+      const werte = liste.werte;
+      const element = (w) => (liste.elementTyp ? anpassen(liste.elementTyp, w, t) : w);
+      const index = (w, max) => {
+        if (typeof w !== "number") throw new SketchFehler(`Der Index muss eine ganze Zahl sein, nicht „${typName(w)}“.`, t);
+        if (w < 0 || w > max) {
+          throw laufzeitFehler(`IndexOutOfBoundsException: Index ${w} out of bounds for length ${werte.length}`, t);
+        }
+        return w;
+      };
+      const gleich = (x, y) => (istZahl(x) && istZahl(y) ? zahl(x) === zahl(y) : x === y);
+
+      switch (`${a.name}/${args.length}`) {
+        case "add/1": werte.push(element(args[0])); return true;
+        case "add/2": werte.splice(index(args[0], werte.length), 0, element(args[1])); return undefined;
+        case "get/1": return werte[index(args[0], werte.length - 1)];
+        case "set/2": {
+          const i = index(args[0], werte.length - 1);
+          const alt = werte[i];
+          werte[i] = element(args[1]);
+          return alt;
+        }
+        case "remove/1":
+          if (typeof args[0] === "number") return werte.splice(index(args[0], werte.length - 1), 1)[0];
+          {
+            const i = werte.findIndex((w) => gleich(w, args[0]));
+            if (i >= 0) werte.splice(i, 1);
+            return i >= 0;
+          }
+        case "size/0": return werte.length;
+        case "isEmpty/0": return werte.length === 0;
+        case "clear/0": werte.length = 0; return undefined;
+        case "contains/1": return werte.some((w) => gleich(w, args[0]));
+        case "indexOf/1": return werte.findIndex((w) => gleich(w, args[0]));
+        case "toString/0": return javaText(liste);
+        default: throw new SketchFehler(`Die Methode „${a.name}()“ kennt diese Simulation für „ArrayList“ nicht.`, t);
+      }
+    };
+
     function rufe(a, r) {
       const n = a.args.length;
 
@@ -1319,6 +1426,7 @@
       const args = werteListe(a.args, r);
       if (ziel === null) throw laufzeitFehler("NullPointerException", a.token);
       if (typeof ziel === "string") return textMethode(ziel, a, args);
+      if (ziel instanceof Liste) return listenMethode(ziel, a, args);
       if (ziel instanceof Objekt) {
         const m = findeMethode(ziel.klasse, a.name, n, false);
         if (m) return fuehreAus(m, ziel, args, a.token);
@@ -1385,7 +1493,9 @@
         case "foreach": {
           const reihe = werte(s.quelle, r);
           if (reihe === null) throw laufzeitFehler("NullPointerException", s.token);
-          if (!(reihe instanceof Reihung)) throw new SketchFehler("„for (… : …)“ geht in dieser Simulation nur mit Arrays.", s.token);
+          if (!(reihe instanceof Reihung) && !(reihe instanceof Liste)) {
+            throw new SketchFehler("„for (… : …)“ geht in dieser Simulation nur mit Arrays und ArrayLists.", s.token);
+          }
           for (const w of reihe.werte.slice()) {
             zaehle(s.token);
             const innen = { selbst: r.selbst, klasse: r.klasse, bereich: { vars: new Map(), eltern: r.bereich } };
@@ -1409,15 +1519,74 @@
 
     /* --- Processing-Funktionen --- */
 
-    const farbe = (args, t) => {
+    /* Farbe wie in Processing: Grauwert, Grau + Alpha, RGB, RGBA oder ein color-Wert.
+       background() ignoriert die Deckkraft - dafür mitAlpha = false. */
+    const farbe = (args, t, mitAlpha = true) => {
       const n = args.map((w) => zahlArg(w, t));
       const c = (v) => Math.max(0, Math.min(255, Math.round(v)));
+      let rot;
+      let gruen;
+      let blau;
+      let alpha = 255;
       if (n.length <= 2 && typeof args[0] === "number" && (args[0] > 255 || args[0] < 0)) {
         const v = args[0] >>> 0;
-        return `rgb(${(v >>> 16) & 255}, ${(v >>> 8) & 255}, ${v & 255})`;
+        [rot, gruen, blau, alpha] = [(v >>> 16) & 255, (v >>> 8) & 255, v & 255, (v >>> 24) & 255];
+        if (n.length === 2) alpha = c(n[1]);
+      } else if (n.length <= 2) {
+        rot = gruen = blau = c(n[0]);
+        if (n.length === 2) alpha = c(n[1]);
+      } else {
+        [rot, gruen, blau] = [c(n[0]), c(n[1]), c(n[2])];
+        if (n.length === 4) alpha = c(n[3]);
       }
-      if (n.length <= 2) return `rgb(${c(n[0])}, ${c(n[0])}, ${c(n[0])})`;
-      return `rgb(${c(n[0])}, ${c(n[1])}, ${c(n[2])})`;
+      return `rgba(${rot}, ${gruen}, ${blau}, ${mitAlpha ? alpha / 255 : 1})`;
+    };
+
+    /* --- Zeichnen. Startzustand wie in Processing: weiße Füllung, schwarzer Rand 1 px --- */
+
+    const stil = { fuellung: "rgba(255, 255, 255, 1)", linie: "rgba(0, 0, 0, 1)", breite: 1, rectMode: 0, ellipseMode: 3, textGroesse: 12 };
+    const MODI = { rect: [0, 1, 2, 3], ellipse: [0, 1, 2, 3] };
+
+    const male = (pfad) => {
+      const ctx = ausgabe.kontext;
+      ctx.beginPath();
+      pfad(ctx);
+      if (stil.fuellung) {
+        ctx.fillStyle = stil.fuellung;
+        ctx.fill();
+      }
+      if (stil.linie && stil.breite > 0) {
+        ctx.strokeStyle = stil.linie;
+        ctx.lineWidth = stil.breite;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "miter";
+        ctx.stroke();
+      }
+    };
+
+    /* Umrechnung nach rectMode/ellipseMode: CORNER 0, CORNERS 1, RADIUS 2, CENTER 3 */
+    const kasten = (modus, a, b, c, d) => {
+      if (modus === 1) return [a, b, c - a, d - b];
+      if (modus === 2) return [a - c, b - d, 2 * c, 2 * d];
+      if (modus === 3) return [a - c / 2, b - d / 2, c, d];
+      return [a, b, c, d];
+    };
+
+    const zahlen = (args, t) => args.map((w) => zahlArg(w, t));
+
+    const zeichneRechteck = (args, t) => {
+      const [x, y, b, h] = kasten(stil.rectMode, ...zahlen(args, t));
+      male((ctx) => ctx.rect(x, y, b, h));
+    };
+
+    const zeichneEllipse = (args, t) => {
+      const [x, y, b, h] = kasten(stil.ellipseMode, ...zahlen(args, t));
+      male((ctx) => ctx.ellipse(x + b / 2, y + h / 2, Math.abs(b / 2), Math.abs(h / 2), 0, 0, Math.PI * 2));
+    };
+
+    const setzeModus = (art) => ([w], t) => {
+      if (!MODI[art].includes(w)) throw new SketchFehler(`„${art}Mode()“ erwartet CORNER, CORNERS, RADIUS oder CENTER.`, t);
+      stil[`${art}Mode`] = w;
     };
 
     const druckeReihung = (reihe) => {
@@ -1455,7 +1624,66 @@
           ausgabe.groesse(lauf.breite, lauf.hoehe);
         }
       },
-      background: { anzahl: [1, 2, 3, 4], f: (args, t) => ausgabe.hintergrund(farbe(args, t)) },
+      background: { anzahl: [1, 2, 3, 4], f: (args, t) => ausgabe.hintergrund(farbe(args, t, false)) },
+      fill: { anzahl: [1, 2, 3, 4], f: (args, t) => { stil.fuellung = farbe(args, t); } },
+      noFill: { anzahl: [0], f: () => { stil.fuellung = null; } },
+      stroke: { anzahl: [1, 2, 3, 4], f: (args, t) => { stil.linie = farbe(args, t); } },
+      noStroke: { anzahl: [0], f: () => { stil.linie = null; } },
+      strokeWeight: { anzahl: [1], f: ([w], t) => { stil.breite = zahlArg(w, t); } },
+      rectMode: { anzahl: [1], f: setzeModus("rect") },
+      ellipseMode: { anzahl: [1], f: setzeModus("ellipse") },
+      rect: { anzahl: [4], f: zeichneRechteck },
+      square: { anzahl: [3], f: ([x, y, s], t) => zeichneRechteck([x, y, s, s], t) },
+      ellipse: { anzahl: [4], f: zeichneEllipse },
+      circle: { anzahl: [3], f: ([x, y, d], t) => zeichneEllipse([x, y, d, d], t) },
+      triangle: {
+        anzahl: [6],
+        f: (args, t) => {
+          const [x1, y1, x2, y2, x3, y3] = zahlen(args, t);
+          male((ctx) => {
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.closePath();
+          });
+        }
+      },
+      line: {
+        anzahl: [4],
+        f: (args, t) => {
+          const [x1, y1, x2, y2] = zahlen(args, t);
+          const fuellung = stil.fuellung;
+          stil.fuellung = null;
+          male((ctx) => {
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+          });
+          stil.fuellung = fuellung;
+        }
+      },
+      point: {
+        anzahl: [2],
+        f: (args, t) => {
+          if (!stil.linie) return;
+          const [x, y] = zahlen(args, t);
+          const ctx = ausgabe.kontext;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.max(0.5, stil.breite / 2), 0, Math.PI * 2);
+          ctx.fillStyle = stil.linie;
+          ctx.fill();
+        }
+      },
+      textSize: { anzahl: [1], f: ([w], t) => { stil.textGroesse = zahlArg(w, t); } },
+      text: {
+        anzahl: [3],
+        f: ([w, x, y], t) => {
+          if (!stil.fuellung) return;
+          const ctx = ausgabe.kontext;
+          ctx.font = `${stil.textGroesse}px "Segoe UI", Arial, sans-serif`;
+          ctx.fillStyle = stil.fuellung;
+          ctx.fillText(javaText(w), zahlArg(x, t), zahlArg(y, t));
+        }
+      },
       color: {
         anzahl: [1, 2, 3, 4],
         f: (args, t) => {
@@ -1717,16 +1945,35 @@
     sketchWindow.style.top = `${fensterPos.oben}px`;
   };
 
-  /* Beim ersten Öffnen unten rechts im Editor - dort steht fast nie Code */
+  let vonHandVerschoben = false;
+
+  /* Große Sketche (z. B. size(800, 600)) maßstabsgetreu verkleinert anzeigen: höchstens
+     45 % der IDE-Breite und drei Viertel der Editorhöhe. Gezeichnet wird in voller Größe. */
+  const passeAnzeigeAn = () => {
+    const titel = sketchTitlebar.offsetHeight || 28;
+    const maxBreite = Math.max(110, ide.clientWidth * 0.45);
+    const maxHoehe = Math.max(80, ideEditor.clientHeight * 0.75 - titel);
+    const faktor = Math.min(1, maxBreite / sketchCanvas.width, maxHoehe / sketchCanvas.height);
+    sketchCanvas.style.width = `${Math.round(sketchCanvas.width * faktor)}px`;
+    sketchCanvas.style.height = `${Math.round(sketchCanvas.height * faktor)}px`;
+  };
+
+  /* Unten rechts im Editor - dort steht fast nie Code */
+  const setzeStandardPos = () => {
+    const unten = ideEditor.offsetTop + ideEditor.clientHeight - sketchWindow.offsetHeight - 12;
+    setzeFensterPos(ide.clientWidth - sketchWindow.offsetWidth - 16, Math.max(ideEditor.offsetTop + 12, unten));
+  };
+
+  const platziereFenster = () => {
+    passeAnzeigeAn();
+    if (vonHandVerschoben && fensterPos) setzeFensterPos(fensterPos.links, fensterPos.oben);
+    else setzeStandardPos();
+  };
+
   const oeffneFenster = () => {
     sketchTitle.textContent = sketchName;
     sketchWindow.hidden = false;
-    if (fensterPos) {
-      setzeFensterPos(fensterPos.links, fensterPos.oben);
-      return;
-    }
-    const unten = ideEditor.offsetTop + ideEditor.clientHeight - sketchWindow.offsetHeight - 12;
-    setzeFensterPos(ide.clientWidth - sketchWindow.offsetWidth - 16, Math.max(ideEditor.offsetTop + 12, unten));
+    platziereFenster();
   };
 
   const fuelle = (farbeText) => {
@@ -1735,11 +1982,13 @@
   };
 
   const ausgabe = {
+    kontext: zeichenflaeche,
     schreibe: (text, fehler) => konsole.schreibe(text, fehler),
     groesse: (breite, hoehe) => {
       sketchCanvas.width = breite;
       sketchCanvas.height = hoehe;
       fuelle(STANDARD_HINTERGRUND);
+      if (!sketchWindow.hidden) platziereFenster();
     },
     hintergrund: (farbeText) => fuelle(farbeText)
   };
@@ -1750,7 +1999,10 @@
     const start = { x: event.clientX, y: event.clientY, links: fensterPos.links, oben: fensterPos.oben };
     sketchTitlebar.setPointerCapture(event.pointerId);
 
-    const bewege = (e) => setzeFensterPos(start.links + e.clientX - start.x, start.oben + e.clientY - start.y);
+    const bewege = (e) => {
+      vonHandVerschoben = true;
+      setzeFensterPos(start.links + e.clientX - start.x, start.oben + e.clientY - start.y);
+    };
     const ende = () => {
       sketchTitlebar.removeEventListener("pointermove", bewege);
       sketchTitlebar.removeEventListener("pointerup", ende);
@@ -1762,7 +2014,7 @@
   });
 
   window.addEventListener("resize", () => {
-    if (!sketchWindow.hidden && fensterPos) setzeFensterPos(fensterPos.links, fensterPos.oben);
+    if (!sketchWindow.hidden) platziereFenster();
   });
 
   /* --- Ausführen und Stoppen --- */
@@ -1851,7 +2103,6 @@
       return;
     }
 
-    setzeFensterPos(fensterPos.links, fensterPos.oben); // size() kann das Fenster verändert haben
     if (lauf.beendet) stoppe();
     else plane();
   };
