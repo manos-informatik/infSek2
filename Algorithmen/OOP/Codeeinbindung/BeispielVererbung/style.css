@@ -1,0 +1,510 @@
+:root {
+  color-scheme: dark;
+  --primary: #22d3ee;
+  --secondary: #10b981;
+  --accent: #fbbf24;
+  --danger: #fb7185;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-soft: #253248;
+  --text: #f1f5f9;
+  --muted: #a8b5c7;
+  --border: #334155;
+  --shadow: 0 16px 30px -14px rgba(0, 0, 0, 0.55);
+  --focus: 0 0 0 3px rgba(34, 211, 238, 0.3);
+  --radius: 18px;
+
+  /* themenspezifisch: Processing-IDE (Werte wie auf der Seite VererbungUndPolymorphie) */
+  --ide-frame: #7ea6c4;
+  --ide-bar: #c9def0;
+  --ide-bar-line: #a8c6de;
+  --ide-tab: #b4d2e8;
+  --ide-blue: #2d7bb6;
+  --ide-ink: #14344a;
+  --ide-focus: 0 0 0 3px rgba(45, 123, 182, 0.55);
+  --ide-console-bg: #141414;
+  --ide-console-text: #f0f0f0;
+  --ide-console-error: #ff7b7b;
+  --ide-error-bar: #b3261e;
+  --ide-mono: "Cascadia Code", Consolas, "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Muss stehenbleiben: eigene display-Angaben würden das eingebaute
+   [hidden]-Verhalten des Browsers sonst überstimmen. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+  color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(100, 116, 139, 0.45) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(100, 116, 139, 0.35) 1px, transparent 1px),
+    radial-gradient(circle at 88% 16%, rgba(16, 185, 129, 0.18), transparent 22%),
+    radial-gradient(circle at 8% 10%, rgba(34, 211, 238, 0.16), transparent 24%);
+  background-size: 44px 44px, 44px 44px, auto, auto;
+  background-position: 0 0, 22px 22px, center, center;
+}
+
+button {
+  font: inherit;
+}
+
+/* --- Rahmenmaße --- */
+.container, .footer {
+  width: min(1100px, 100% - 2rem);
+  margin: 0 auto;
+}
+
+.container {
+  padding: 1.6rem 0 1.4rem;
+}
+
+/* --- Processing-IDE --- */
+.ide {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ide-frame);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.ide-toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  background: var(--ide-bar);
+  border-bottom: 1px solid var(--ide-bar-line);
+}
+
+.ide-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.ide-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.ide-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ide-focus);
+}
+
+.ide-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.ide-icon {
+  position: relative;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  background: var(--ide-blue);
+}
+
+.ide-icon-run::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 56%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 0.45rem 0 0.45rem 0.7rem;
+  border-color: transparent transparent transparent #ffffff;
+}
+
+.ide-icon-stop::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.72rem;
+  height: 0.72rem;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+}
+
+/* Sketch läuft: Ausführen leuchtet hell auf, wie in der IDE */
+.ide-button.is-running .ide-icon {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 2px var(--ide-blue);
+}
+
+.ide-button.is-running .ide-icon-run::before {
+  border-left-color: var(--ide-blue);
+}
+
+/* Höhe bewusst auf Leistenhöhe statt 44px: die Knöpfe gehören zur Fensterleiste der IDE */
+.ide-text-button {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid #8fb2cc;
+  border-radius: 5px;
+  background: #eaf3fa;
+  color: #1a3d55;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.ide-text-button:hover {
+  background: #ffffff;
+  border-color: var(--ide-blue);
+}
+
+.ide-text-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ide-focus);
+}
+
+.ide-download {
+  margin-left: auto;
+}
+
+.ide-mode {
+  margin-left: 0.2rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #8fb2cc;
+  border-radius: 4px;
+  background: #eaf3fa;
+  color: #1a3d55;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Reiter links, Kopieren rechts - rechts derselbe Innenabstand wie in der
+   Werkzeugleiste, damit Kopieren bündig unter „Java“ steht */
+.ide-tabbar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.35rem 0.7rem 0 0.5rem;
+  background: var(--ide-bar);
+}
+
+.ide-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ide-copy {
+  margin-left: auto;
+  margin-bottom: 0.35rem;
+}
+
+.ide-tab {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--ide-bar-line);
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  background: var(--ide-tab);
+  color: var(--ide-ink);
+  font-family: var(--ide-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ide-tab.is-active {
+  background: #ffffff;
+  color: #0d2433;
+}
+
+.ide-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--ide-focus);
+}
+
+/* Feste Höhe: beim Reiterwechsel springt das Layout nicht */
+.ide-editor {
+  position: relative;
+  flex: none;
+  height: clamp(14rem, 52vh, 25rem);
+  overflow: auto;
+  background: #ffffff;
+}
+
+.code-view {
+  min-width: max-content;
+  padding: 0.5rem 0;
+  font-family: var(--ide-mono);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.code-view:focus-visible {
+  outline: 2px solid var(--ide-blue);
+  outline-offset: -2px;
+}
+
+.ide-line {
+  display: flex;
+  align-items: flex-start;
+  white-space: pre;
+}
+
+.ide-gutter {
+  flex: 0 0 2.6rem;
+  padding-right: 0.6rem;
+  border-right: 1px solid #dbe6ee;
+  color: #8aa0b0;
+  text-align: right;
+  user-select: none;
+}
+
+.ide-code {
+  padding-left: 0.8rem;
+  color: #10202b;
+}
+
+/* Zeile, in der ein Fehler auftrat - wie die Markierung in der IDE */
+.ide-line.is-error {
+  background: rgba(251, 113, 133, 0.3);
+}
+
+/* Syntaxfarben, angelehnt an die Processing-IDE */
+.tok-keyword  { color: #33997e; }
+.tok-type     { color: #e2661a; }
+.tok-function { color: #006699; font-weight: 700; }
+.tok-builtin  { color: #006699; }
+.tok-string   { color: #7d4793; }
+.tok-number   { color: var(--ide-blue); }
+.tok-comment  { color: #7e7e7e; font-style: italic; }
+
+/* Meldungsleiste zwischen Editor und Konsole */
+.ide-message {
+  flex: none;
+  min-height: 1.95rem;
+  margin: 0;
+  padding: 0.38rem 0.8rem;
+  border-top: 1px solid var(--ide-bar-line);
+  background: #dbe8f3;
+  color: #1a3d55;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ide-message.is-error {
+  border-top-color: var(--ide-error-bar);
+  background: var(--ide-error-bar);
+  color: #ffffff;
+}
+
+.ide-console {
+  flex: none;
+  height: 8.8rem;
+  overflow: auto;
+  padding: 0.45rem 0.8rem;
+  background: var(--ide-console-bg);
+  color: var(--ide-console-text);
+  font-family: var(--ide-mono);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.ide-console:focus-visible {
+  outline: 2px solid var(--ide-blue);
+  outline-offset: -2px;
+}
+
+.console-line {
+  min-height: 1.45em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.console-line.is-error {
+  color: var(--ide-console-error);
+}
+
+.ide-console-tabs {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 0 0.5rem 0.35rem;
+  background: var(--ide-bar);
+}
+
+.ide-console-tab {
+  padding: 0.2rem 0.8rem;
+  border: 1px solid var(--ide-bar-line);
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  background: var(--ide-tab);
+  color: var(--ide-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ide-console-tab.is-active {
+  border-color: var(--ide-console-bg);
+  background: var(--ide-console-bg);
+  color: var(--ide-console-text);
+}
+
+/* --- Sketch-Fenster: öffnet sich bei ▶, lässt sich an der Titelleiste verschieben --- */
+.sketch-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  overflow: hidden;
+  border: 1px solid #6b7c8c;
+  border-radius: 8px;
+  background: #f3f3f3;
+  box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.55);
+}
+
+.sketch-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.12rem 0.12rem 0.12rem 0.6rem;
+  color: #1f1f1f;
+  font-size: 0.78rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.sketch-titlebar:active {
+  cursor: grabbing;
+}
+
+.sketch-title {
+  flex: 1;
+}
+
+.sketch-close {
+  width: 2rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #1f1f1f;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sketch-close:hover {
+  background: #e81123;
+  color: #ffffff;
+}
+
+.sketch-close:focus-visible {
+  outline: none;
+  box-shadow: var(--ide-focus);
+}
+
+.sketch-body {
+  display: flex;
+  justify-content: center;
+  background: #cccccc;
+}
+
+.sketch-canvas {
+  display: block;
+  max-width: min(70vw, 400px);
+  height: auto;
+}
+
+/* --- Footer --- */
+.footer {
+  text-align: center;
+  padding-bottom: 1.8rem;
+  color: #a6b7cc;
+}
+
+/* --- Eingebettet (iframe, z. B. Logseq): nur die IDE, sie füllt den Rahmen --- */
+html.is-embedded body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 24rem;
+}
+
+html.is-embedded .container {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 0.5rem 0.5rem 0;
+}
+
+html.is-embedded .ide {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html.is-embedded .ide-editor {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 5rem;
+}
+
+html.is-embedded .ide-console {
+  height: clamp(5.8rem, 24vh, 11rem);
+}
+
+html.is-embedded .footer {
+  flex: none;
+  width: 100%;
+  padding: 0.3rem 0.5rem 0.35rem;
+  font-size: 0.72rem;
+}
+
+html.is-embedded .footer p {
+  margin: 0;
+}
+
+/* --- Mobil --- */
+@media (max-width: 540px) {
+  .container {
+    padding-top: 1rem;
+  }
+
+  .code-view,
+  .ide-console {
+    font-size: 0.8rem;
+  }
+
+  .ide-gutter {
+    flex-basis: 2.1rem;
+    padding-right: 0.45rem;
+  }
+
+  .ide-code {
+    padding-left: 0.55rem;
+  }
+}
