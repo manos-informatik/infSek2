@@ -72,8 +72,10 @@
 <script type="text/x-processing" data-tab="MedienProjekt">
 Movie movie;
 Song song;
+Medium medium;
 
 void setup() {
+  medium = new Medium("Mein Medium", "datei.dat");
   movie = new Movie("Mein Film", "film.mp4", "Anna Beispiel");
   song = new Song("Mein Lied", "lied.mp3", "Max Beispiel");
   println("Movie: " + movie.title);
@@ -83,6 +85,9 @@ void setup() {
   println("Song: " + song.title);
   println("Datei: " + song.file);
   println("Interpret: " + song.artist);
+
+  println("Titel: " + medium.title);
+  println("Datei: " + medium.file);
   noLoop();
 }
 </script>
