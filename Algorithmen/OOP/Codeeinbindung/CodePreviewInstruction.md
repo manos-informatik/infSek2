@@ -23,14 +23,16 @@ der Konsole wie in Processing. Die Seite wird über ein iframe in Logseq eingebu
      `.pde`. Der Code steht bündig am linken Rand, damit die Einrückung stimmt.
    - `data-hervorheben` an `<section class="ide">`: Wörter, die neu sind und im Code gelb
      markiert werden sollen, mit Leerzeichen getrennt (z. B. `"extends super"` bei
-     Vererbung). Nicht klar, was neu ist? Nachfragen. Nichts markieren: Attribut leer lassen.
+     Vererbung, `"@Override"` bei Polymorphie). Nicht klar, was neu ist? Nachfragen. Nichts markieren: Attribut leer lassen.
 3. In der `script.js` nur `STORAGE_KEY` anpassen: `infsek2-oop-beispiel<thema>-v1`.
 4. `style.css` bleibt unverändert.
 5. Testen (siehe unten), nicht committen, nicht pushen.
 
 `script.js` enthält einen allgemeinen Interpreter und muss für neue Beispiele nicht
 umgeschrieben werden. Nur wenn die Vorlage etwas braucht, das er nicht kann (siehe
-„Grenzen“), gezielt erweitern und das melden.
+„Grenzen“), gezielt erweitern und das melden. **`script.js` ist in allen Seiten gleich**
+(bis auf `STORAGE_KEY`): Eine Erweiterung in alle `Beispiel*`-Ordner übernehmen und die
+älteren Seiten erneut testen.
 
 ## Umgang mit dem Vorlagen-Code
 
@@ -98,7 +100,8 @@ beim Laden, sonst springt die Logseq-Seite.
 ## Was der Interpreter kann
 
 Klassen mit `extends` und `abstract`, Attribute mit Startwerten, Konstruktoren mit
-`super(...)`, Methoden mit Überschreiben und `super.methode()`, `toString()`, `this`,
+`super(...)`, Methoden mit Überschreiben und `super.methode()`, `@Override` (wird wie in
+Java geprüft: ohne passende Methode in der Oberklasse gibt es einen Fehler), `toString()`, `this`,
 `new`, `instanceof`, Casts, `int`/`float` mit Java-Rechenregeln (`10 / 4` → `2`,
 Float-Ausgabe `2.0`), `String`-Verkettung und einige String-Methoden, `if`/`else`,
 `while`, `for`, `for (T x : array)`, `break`/`continue`, eindimensionale Arrays.

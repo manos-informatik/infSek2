@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedienProjektPolymorphie – Beispiel Polymorphie</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    /* Im iframe (z. B. in Logseq) füllt die IDE den ganzen Rahmen. Steht im head,
+       damit das Layout nicht springt. ?embed=1 bzw. ?embed=0 erzwingt es. */
+    (() => {
+      const wunsch = new URLSearchParams(location.search).get("embed");
+      let imRahmen = true;
+      try { imRahmen = window.self !== window.top; } catch { /* fremder Rahmen */ }
+      if (wunsch === "1" || (wunsch !== "0" && imRahmen)) {
+        document.documentElement.classList.add("is-embedded");
+      }
+    })();
+  </script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <main class="container">
+    <!-- data-hervorheben: Wörter, die im Code gelb markiert werden (das Neue der Stunde) -->
+    <section class="ide" id="ide" aria-label="Processing-Simulation" data-hervorheben="@Override">
+      <div class="ide-toolbar">
+        <button class="ide-button" id="runButton" type="button" title="Ausführen" aria-label="Ausführen">
+          <span class="ide-icon ide-icon-run" aria-hidden="true"></span>
+        </button>
+        <button class="ide-button" id="stopButton" type="button" title="Stopp" aria-label="Stopp" disabled>
+          <span class="ide-icon ide-icon-stop" aria-hidden="true"></span>
+        </button>
+        <button class="ide-text-button ide-download" id="downloadButton" type="button">Projekt-Downloaden</button>
+        <span class="ide-mode" aria-hidden="true">Java</span>
+      </div>
+
+      <div class="ide-tabbar">
+        <div class="ide-tabs" id="ideTabs" role="tablist" aria-label="Dateien des Sketches"></div>
+        <button class="ide-text-button ide-copy" id="copyButton" type="button">Kopieren</button>
+      </div>
+
+      <div class="ide-editor" id="ideEditor">
+        <div class="code-view" id="codeView" role="tabpanel" tabindex="0"></div>
+      </div>
+
+      <p class="ide-message" id="ideMessage" aria-live="polite">Klicke auf ▶, um den Sketch zu starten.</p>
+
+      <div class="ide-console" id="ideConsole" role="log" aria-label="Konsole" tabindex="0"></div>
+
+      <div class="ide-console-tabs" aria-hidden="true">
+        <span class="ide-console-tab is-active">Konsole</span>
+        <span class="ide-console-tab">Fehler</span>
+      </div>
+
+      <div class="sketch-window" id="sketchWindow" hidden>
+        <div class="sketch-titlebar" id="sketchTitlebar">
+          <span class="sketch-title" id="sketchTitle"></span>
+          <button class="sketch-close" id="sketchClose" type="button" title="Schließen" aria-label="Sketch-Fenster schließen">✕</button>
+        </div>
+        <div class="sketch-body">
+          <canvas class="sketch-canvas" id="sketchCanvas" width="100" height="100"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p>
+  </footer>
+
+  <!-- Quelltext des Sketches: ein Block pro Reiter, der erste ist der Hauptreiter.
+       Die Seite zeigt genau diesen Text an und führt ihn beim Klick auf ▶ aus. -->
+<script type="text/x-processing" data-tab="MedienProjektPolymorphie">
+Movie movie;
+Song song;
+Medium medium;
+
+void setup() {
+  medium = new Medium("Mein Medium", "datei.dat");
+  movie = new Movie("Mein Film", "film.mp4", "Anna Beispiel");
+  song = new Song("Mein Lied", "lied.mp3", "Max Beispiel");
+  
+  movie.uebersicht();
+
+  song.uebersicht();
+  
+  medium.uebersicht();
+  noLoop();
+}
+</script>
+
+<script type="text/x-processing" data-tab="Medium">
+class Medium {
+  String title;
+  String file;
+
+  Medium(String title, String file) {
+    this.title = title;
+    this.file = file;
+  }
+
+  void uebersicht() {
+    println("Beschreibung eines Mediums:");
+    println("Titel: " + title);
+    println("Datei: " + file + "\n");
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Movie">
+class Movie extends Medium {
+  String director;
+
+  Movie(String title, String file, String director) {
+    super(title, file);
+    this.director = director;
+  }
+
+  @Override
+  void uebersicht() {
+    println("Beschreibung eines Films:");
+    println("Titel: " + title);
+    println("Datei: " + file);
+    println("Regie: " + director + "\n");
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Song">
+class Song extends Medium {
+  String artist;
+
+  Song(String title, String file, String artist) {
+    super(title, file);
+    this.artist = artist;
+  }
+
+  @Override
+  void uebersicht() {
+    println("Beschreibung eines Songs:");
+    println("Song: " + title);
+    println("Datei: " + file);
+    println("Interpret: " + artist + "\n");
+  }
+}
+</script>
+</body>
+</html>
