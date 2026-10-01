@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sortierverfahren – Lösungen</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    /* Im iframe (z. B. in Logseq) füllt die IDE den ganzen Rahmen. Steht im head,
+       damit das Layout nicht springt. ?embed=1 bzw. ?embed=0 erzwingt es. */
+    (() => {
+      const wunsch = new URLSearchParams(location.search).get("embed");
+      let imRahmen = true;
+      try { imRahmen = window.self !== window.top; } catch { /* fremder Rahmen */ }
+      if (wunsch === "1" || (wunsch !== "0" && imRahmen)) {
+        document.documentElement.classList.add("is-embedded");
+      }
+    })();
+  </script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <main class="container">
+    <!-- data-hervorheben: Wörter, die im Code gelb markiert werden (das Neue der Stunde) -->
+    <section class="ide" id="ide" aria-label="Processing-Simulation" data-hervorheben="">
+      <div class="ide-toolbar">
+        <button class="ide-button" id="runButton" type="button" title="Ausführen" aria-label="Ausführen">
+          <span class="ide-icon ide-icon-run" aria-hidden="true"></span>
+        </button>
+        <button class="ide-button" id="stopButton" type="button" title="Stopp" aria-label="Stopp" disabled>
+          <span class="ide-icon ide-icon-stop" aria-hidden="true"></span>
+        </button>
+        <button class="ide-text-button ide-download" id="downloadButton" type="button">Projekt-Downloaden</button>
+        <span class="ide-mode" aria-hidden="true">Java</span>
+      </div>
+
+      <div class="ide-tabbar">
+        <div class="ide-tabs" id="ideTabs" role="tablist" aria-label="Dateien des Sketches"></div>
+        <button class="ide-text-button ide-copy" id="copyButton" type="button">Kopieren</button>
+      </div>
+
+      <div class="ide-editor" id="ideEditor">
+        <div class="code-view" id="codeView" role="tabpanel" tabindex="0"></div>
+      </div>
+
+      <p class="ide-message" id="ideMessage" aria-live="polite">Klicke auf ▶, um den Sketch zu starten.</p>
+
+      <div class="ide-console" id="ideConsole" role="log" aria-label="Konsole" tabindex="0"></div>
+
+      <div class="ide-console-tabs" aria-hidden="true">
+        <span class="ide-console-tab is-active">Konsole</span>
+        <span class="ide-console-tab">Fehler</span>
+      </div>
+
+      <div class="sketch-window" id="sketchWindow" hidden>
+        <div class="sketch-titlebar" id="sketchTitlebar">
+          <span class="sketch-title" id="sketchTitle"></span>
+          <button class="sketch-close" id="sketchClose" type="button" title="Schließen" aria-label="Sketch-Fenster schließen">✕</button>
+        </div>
+        <div class="sketch-body">
+          <canvas class="sketch-canvas" id="sketchCanvas" width="100" height="100"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p>
+  </footer>
+
+  <!-- Quelltext des Sketches: ein Block pro Reiter, der erste ist der Hauptreiter.
+       Die Seite zeigt genau diesen Text an und führt ihn beim Klick auf ▶ aus. -->
+<script type="text/x-processing" data-tab="Sortierverfahren">
+ArrayList<Integer> Liste = new ArrayList<Integer>();
+
+void setup() {
+  Liste.add(35);
+  Liste.add(1);
+  Liste.add(65);
+  Liste.add(23);
+  Liste.add(2);
+}
+
+void draw() {
+  noLoop();
+  println("Ausgangsliste: " + Liste);
+  println();
+  testeSortierung("Bogosort", new Bogosort());
+  testeSortierung("Bubblesort", new Bubblesort());
+  testeSortierung("Selectionsort", new Selectionsort());
+  testeSortierung("Quicksort", new Quicksort());
+  testeSortierung("Quicksort rekursiv", new QuicksortRekursiv());
+}
+
+void testeSortierung(String name, Sortieralgorithmen verfahren) {
+  // Jedes Verfahren bekommt dieselbe Ausgangsliste als eigene Kopie.
+  ArrayList<Integer> kopie = new ArrayList<Integer>();
+  for (int wert : Liste) {
+    kopie.add(wert);
+  }
+  println(name + ": " + verfahren.sort(kopie));
+}
+</script>
+
+<script type="text/x-processing" data-tab="Bogosort">
+class Bogosort extends Sortieralgorithmen {
+  
+  Bogosort(){
+  }
+
+  @Override
+  ArrayList<Integer> sort(ArrayList<Integer> liste) {
+    while (!istSortiert(liste)) {
+      // Die Liste zufaellig neu mischen.
+      for (int i = liste.size() - 1; i > 0; i--) {
+        int zufall = (int) random(i + 1);
+
+        int hilfe = liste.get(i);
+        liste.set(i, liste.get(zufall));
+        liste.set(zufall, hilfe);
+      }
+    }
+    return liste;
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Bubblesort">
+class Bubblesort extends Sortieralgorithmen {
+
+  Bubblesort() {
+  }
+
+  @Override
+  ArrayList<Integer> sort(ArrayList<Integer> liste) {
+    for (int i = 0; i < liste.size() - 1; i++) {
+      for (int j = 0; j < liste.size() - 1 - i; j++) {
+        if (liste.get(j) > liste.get(j + 1)) {
+          int tmp = liste.get(j);
+          liste.set(j, liste.get(j + 1));
+          liste.set(j + 1, tmp);
+        }
+      }
+    }
+    return liste;
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Quicksort">
+class Quicksort extends Sortieralgorithmen {
+
+  Quicksort() {
+  }
+
+  @Override
+  ArrayList<Integer> sort(ArrayList<Integer> liste) {
+    ArrayList<int[]> bereiche = new ArrayList<int[]>();
+    bereiche.add(new int[] {0, liste.size() - 1});
+    while (!bereiche.isEmpty()) {
+      int[] bereich = bereiche.remove(0);
+      int links = bereich[0];
+      int rechts = bereich[1];
+      if (links < rechts) {
+        int pivotPosition = aufteilen(liste, links, rechts);
+        bereiche.add(new int[] {links, pivotPosition - 1});
+        bereiche.add(new int[] {pivotPosition + 1, rechts});
+      }
+    }
+    return liste;
+  }
+
+  int aufteilen(ArrayList<Integer> liste, int links, int rechts) {
+    int pivot = liste.get(rechts);
+    int position = links;
+    for (int i = links; i < rechts; i++) {
+      if (liste.get(i) < pivot) {
+        int tmp = liste.get(i);
+        liste.set(i, liste.get(position));
+        liste.set(position, tmp);
+        position++;
+      }
+    }
+    int tmp = liste.get(position);
+    liste.set(position, liste.get(rechts));
+    liste.set(rechts, tmp);
+    return position;
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="QuicksortRekursiv">
+class QuicksortRekursiv extends Sortieralgorithmen {
+
+  QuicksortRekursiv() {
+  }
+
+  @Override
+  ArrayList<Integer> sort(ArrayList<Integer> liste) {
+    quicksort(liste, 0, liste.size() - 1);
+    return liste;
+  }
+
+  void quicksort(ArrayList<Integer> liste, int links, int rechts) {
+    if (links >= rechts) {
+      return;
+    }
+    int pivotPosition = aufteilen(liste, links, rechts);
+    quicksort(liste, links, pivotPosition - 1);
+    quicksort(liste, pivotPosition + 1, rechts);
+  }
+
+  int aufteilen(ArrayList<Integer> liste, int links, int rechts) {
+    int pivot = liste.get(rechts);
+    int position = links;
+    for (int i = links; i < rechts; i++) {
+      if (liste.get(i) < pivot) {
+        int tmp = liste.get(i);
+        liste.set(i, liste.get(position));
+        liste.set(position, tmp);
+        position++;
+      }
+    }
+    int tmp = liste.get(position);
+    liste.set(position, liste.get(rechts));
+    liste.set(rechts, tmp);
+    return position;
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Selectionsort">
+class Selectionsort extends Sortieralgorithmen {
+
+  Selectionsort() {
+  }
+
+  @Override
+  ArrayList<Integer> sort(ArrayList<Integer> liste) {
+    for (int i = 0; i < liste.size() - 1; i++) {
+      int kleinstePosition = i;
+      for (int j = i + 1; j < liste.size(); j++) {
+        if (liste.get(j) < liste.get(kleinstePosition)) {
+          kleinstePosition = j;
+        }
+      }
+      // Erst nach der Suche tauschen.
+      if (kleinstePosition != i) {
+        int tmp = liste.get(i);
+        liste.set(i, liste.get(kleinstePosition));
+        liste.set(kleinstePosition, tmp);
+      }
+    }
+    return liste;
+  }
+}
+</script>
+
+<script type="text/x-processing" data-tab="Sortieralgorithmen">
+class Sortieralgorithmen {
+  
+  Sortieralgorithmen(){ 
+  }
+
+  ArrayList<Integer> sort(ArrayList<Integer> liste) {
+    println("Ich bin eine allgemeine Oberklasse und kann keine Liste sortieren.");
+    return liste;
+  }
+
+  boolean istSortiert(ArrayList<Integer> liste) {
+    for (int i = 0; i < liste.size() - 1; i++) {
+      if (liste.get(i) > liste.get(i + 1)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void printListe(ArrayList<Integer> liste) {
+    println(liste);
+  }
+}
+</script>
+</body>
+</html>
