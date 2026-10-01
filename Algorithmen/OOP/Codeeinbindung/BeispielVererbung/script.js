@@ -47,7 +47,7 @@
     ["PI", Math.PI], ["HALF_PI", Math.PI / 2], ["QUARTER_PI", Math.PI / 4], ["TWO_PI", Math.PI * 2], ["TAU", Math.PI * 2],
     ["CORNER", 0], ["CORNERS", 1], ["RADIUS", 2], ["CENTER", 3]
   ]);
-  const TYP_FARBE = new Set([...TYPEN, "ArrayList"]);
+  const TYP_FARBE = new Set([...TYPEN, "ArrayList", "Integer"]);
   const BEKANNTE_KLASSEN = new Set(["HashMap", "PVector", "PImage", "PFont", "IntList", "FloatList", "StringList", "Table"]);
   const OBJEKT_METHODEN = new Set(["toString", "equals"]);
   const STANDARD_HINTERGRUND = "#cccccc"; // background(204) - so öffnet Processing jedes Sketch-Fenster
@@ -921,6 +921,9 @@
         if (w instanceof Kommazahl) return w;
       } else if (INT_TYPEN.has(typ)) {
         if (typeof w === "number") return w;
+      } else if (typ === "Integer") {
+        // Autoboxing für ArrayList<Integer>; Integer darf auch null sein.
+        if (w === null || typeof w === "number") return w;
       } else if (typ === "boolean") {
         if (typeof w === "boolean") return w;
       } else if (typ === "char") {
