@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "infsek2-oop-beispielpolymorphie-v1";
+  const STORAGE_KEY = "infsek2-oop-arraylistumkehren-v1";
 
   /* =====================================================================
      Quelltext

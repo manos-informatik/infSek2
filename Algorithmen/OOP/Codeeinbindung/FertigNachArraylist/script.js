@@ -29,7 +29,7 @@
   const INT_TYPEN = new Set(["int", "long", "short", "byte", "color"]);
   const FLOAT_TYPEN = new Set(["float", "double"]);
   const MODIFIKATOREN = new Set(["public", "private", "protected", "static", "final", "abstract"]);
-  const NICHT_UNTERSTUETZT = new Set(["interface", "implements", "switch", "do", "import", "try", "throw", "enum"]);
+  const NICHT_UNTERSTUETZT = new Set(["interface", "implements", "switch", "do", "try", "throw", "enum"]);
   const STRUKTUR = new Set(["setup", "draw", "settings"]);
   const EINGEBAUTE_NAMEN = new Set([
     "println", "print", "printArray", "noLoop", "loop", "frameRate", "exit", "size", "background",
@@ -47,7 +47,7 @@
     ["PI", Math.PI], ["HALF_PI", Math.PI / 2], ["QUARTER_PI", Math.PI / 4], ["TWO_PI", Math.PI * 2], ["TAU", Math.PI * 2],
     ["CORNER", 0], ["CORNERS", 1], ["RADIUS", 2], ["CENTER", 3]
   ]);
-  const TYP_FARBE = new Set([...TYPEN, "ArrayList", "Integer"]);
+  const TYP_FARBE = new Set([...TYPEN, "ArrayList", "List", "Integer"]);
   const BEKANNTE_KLASSEN = new Set(["HashMap", "PVector", "PImage", "PFont", "IntList", "FloatList", "StringList", "Table"]);
   const OBJEKT_METHODEN = new Set(["toString", "equals"]);
   const STANDARD_HINTERGRUND = "#cccccc"; // background(204) - so öffnet Processing jedes Sketch-Fenster
@@ -652,6 +652,15 @@
       const t = sieh();
       if (t.typ === "wort" && NICHT_UNTERSTUETZT.has(t.text)) throw nichtUnterstuetzt(t);
       if (nimm(";")) continue;
+      if (nimm("import")) {
+        const pfad = [name().text];
+        while (nimm(".")) pfad.push(name().text);
+        erwarte(";");
+        if (!["java.util.ArrayList", "java.util.List"].includes(pfad.join("."))) {
+          throw new SketchFehler(`Den Import „${pfad.join(".")}“ kann diese Simulation nicht ausführen.`, t);
+        }
+        continue;
+      }
 
       const mods = modifikatoren();
       if (ist("class")) {
@@ -786,9 +795,10 @@
 
   /* ArrayList<elementTyp>; elementTyp "" bei new ArrayList<>(), dann gilt der deklarierte Typ */
   class Liste {
-    constructor(elementTyp) {
+    constructor(elementTyp, nurLesen = false) {
       this.elementTyp = elementTyp;
       this.werte = [];
+      this.nurLesen = nurLesen;
     }
   }
 
@@ -815,7 +825,10 @@
     if (w instanceof Kommazahl) return "float";
     if (typeof w === "string") return "String";
     if (w instanceof Reihung) return `${w.elementTyp}[]`;
-    if (w instanceof Liste) return w.elementTyp ? `ArrayList<${w.elementTyp}>` : "ArrayList";
+    if (w instanceof Liste) {
+      const typ = w.nurLesen ? "List" : "ArrayList";
+      return w.elementTyp ? `${typ}<${w.elementTyp}>` : typ;
+    }
     if (w instanceof Objekt) return w.klasse.name;
     return "void";
   };
@@ -943,7 +956,7 @@
         // Generics prüft Java streng: ArrayList<Kreis> ist keine ArrayList<Form>
         const element = listenElement(typ);
         if (w === null) return w;
-        if (w instanceof Liste) {
+        if (w instanceof Liste && !w.nurLesen) {
           if (w.elementTyp === "" && element) w.elementTyp = element;
           if (!element || !w.elementTyp || w.elementTyp === element) return w;
         }
@@ -1361,7 +1374,20 @@
       };
       const gleich = (x, y) => (istZahl(x) && istZahl(y) ? zahl(x) === zahl(y) : x === y);
 
+      if (liste.nurLesen && ["add", "addAll", "set", "remove", "clear"].includes(a.name)) {
+        throw laufzeitFehler("UnsupportedOperationException", t);
+      }
       switch (`${a.name}/${args.length}`) {
+        case "addAll/1": {
+          const quelle = args[0];
+          if (quelle === null) throw laufzeitFehler("NullPointerException", t);
+          if (!(quelle instanceof Liste)) {
+            throw new SketchFehler("„addAll()“ erwartet eine Liste.", t);
+          }
+          const neueWerte = quelle.werte.map(element);
+          neueWerte.forEach((w) => werte.push(w));
+          return neueWerte.length > 0;
+        }
         case "add/1": werte.push(element(args[0])); return true;
         case "add/2": werte.splice(index(args[0], werte.length), 0, element(args[1])); return undefined;
         case "get/1": return werte[index(args[0], werte.length - 1)];
@@ -1424,6 +1450,20 @@
         throw new SketchFehler(`Die Methode „${a.name}()“ gibt es in der Klasse „${ober.name}“ nicht.`, a.token);
       }
 
+      // Statische Java-Factory; eine gleichnamige Variable oder eigene Klasse hat Vorrang.
+      if (a.ziel.art === "name" && a.ziel.name === "List" &&
+          !findeVariable("List", r) && !programm.klassen.has("List")) {
+        if (a.name !== "of") throw new SketchFehler(`„List.${a.name}()“ kann diese Simulation nicht ausführen.`, a.token);
+        const args = werteListe(a.args, r);
+        const elemente = args.length === 1 && args[0] instanceof Reihung &&
+          !INT_TYPEN.has(args[0].elementTyp) && !FLOAT_TYPEN.has(args[0].elementTyp) &&
+          !["boolean", "char"].includes(args[0].elementTyp) ? args[0].werte : args;
+        if (elemente.includes(null)) throw laufzeitFehler("NullPointerException", a.token);
+        const typen = elemente.map((w) => typeof w === "number" ? "Integer" : typName(w));
+        const liste = new Liste(typen.length && typen.every((typ) => typ === typen[0]) ? typen[0] : "Object", true);
+        liste.werte = elemente.slice();
+        return liste;
+      }
       pruefeMethode(a, r);
       const ziel = werte(a.ziel, r);
       const args = werteListe(a.args, r);
