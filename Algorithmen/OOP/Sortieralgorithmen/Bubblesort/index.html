@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bubblesortsimulation</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Informatik · Sortieralgorithmen</p>
+      <h1>Bubblesortsimulation</h1>
+    </div>
+  </header>
+  <main class="container">
+    <section class="panel" aria-labelledby="task-title">
+      <div class="heading-row">
+        <div>
+          <p class="eyebrow">Aufgabe 1</p>
+          <h2 id="task-title">Sortiere von klein nach groß.</h2>
+        </div>
+        <button class="btn ghost" id="hint" type="button" aria-label="Hinweis öffnen">💡 Hinweis</button>
+      </div>
+      <p class="section-text" id="instruction">Würfle bei Bedarf eine neue Liste und drücke auf „Start“.</p>
+      <div class="status-row" aria-label="Fortschritt">
+        <span class="status-pill" id="round">Bereit</span>
+        <span class="status-pill" id="sorted-count">Einsortiert: 0 / 8</span>
+        <span class="status-pill" id="comparisons">Vergleiche: 0</span>
+        <span class="status-pill" id="swaps">Tauschvorgänge: 0</span>
+      </div>
+      <div class="list-stage">
+        <ol class="number-list" id="number-list" start="0" aria-label="Liste mit acht Elementen"></ol>
+        <p class="pair-caption" id="pair-caption">Indizes 0–7</p>
+      </div>
+      <div class="legend" aria-label="Farblegende">
+        <span><i class="legend-dot current" aria-hidden="true"></i>Aktuelles Paar</span>
+        <span><i class="legend-dot sorted" aria-hidden="true"></i>✓ Einsortiert</span>
+      </div>
+      <div class="action-row" id="setup-actions">
+        <button class="btn ghost" id="shuffle" type="button">Neu würfeln</button>
+        <button class="btn" id="start" type="button">Start</button>
+      </div>
+      <div class="action-row algorithm-actions" id="algorithm-actions" aria-label="Bubblesort steuern" hidden>
+        <button class="btn ghost" id="swap" type="button">Tauschen</button>
+        <button class="btn ghost" id="next" type="button">Weiter</button>
+        <button class="btn ghost" id="restart-pass" type="button">Sprung zu Index 0</button>
+        <button class="btn ghost" id="mark" type="button">Einsortiert markieren</button>
+      </div>
+      <p class="feedback-box" id="feedback" aria-live="polite" aria-atomic="true">Die Liste ist bereit.</p>
+      <div class="action-row new-simulation-row" id="new-simulation-row" hidden>
+        <button class="btn ghost" id="new-simulation" type="button">Neue Simulation</button>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p></footer>
+  <dialog id="hint-dialog" aria-labelledby="hint-title">
+    <h2 id="hint-title">💡 So bedienst du die Simulation</h2>
+    <p>Vergleiche das hervorgehobene Paar: Tausche nur, wenn die linke Zahl größer ist. Drücke anschließend „Weiter“; auch ohne Tausch schließt „Weiter“ den Vergleich ab.</p>
+    <p>Markiere nach dem letzten Vergleich das rechte Element als einsortiert. Springe erst danach zu Index 0. Grüne Elemente werden nicht mehr verglichen.</p>
+    <p>Wenn nur Index 0 übrig ist, markiere auch dieses Element. Die Simulation endet, sobald alle acht Elemente grün sind.</p>
+    <div class="action-row"><button class="btn" id="close-hint" type="button">Schließen</button></div>
+  </dialog>
+</body>
+</html>
