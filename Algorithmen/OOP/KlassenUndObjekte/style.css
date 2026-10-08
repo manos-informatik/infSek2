@@ -648,6 +648,9 @@ h2 {
 }
 
 .code-view {
+  /* Operatoren wie != als einzelne Zeichen anzeigen. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
   padding: 0.5rem 0;
   font-family: "Cascadia Code", Consolas, "Courier New", monospace;
   font-size: 0.86rem;

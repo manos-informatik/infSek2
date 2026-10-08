@@ -255,6 +255,9 @@ button {
 }
 
 .code-view {
+  /* Operatoren wie != als einzelne Zeichen anzeigen. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
   min-width: max-content;
   padding: 0.5rem 0;
   font-family: var(--ide-mono);
