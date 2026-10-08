@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>A1 – Aufgabe 1</title>
+  <title>A2 – Aufgabe 2</title>
   <link rel="stylesheet" href="style.css" />
   <script>
     /* Im iframe (z. B. in Logseq) füllt die IDE den ganzen Rahmen. Steht im head,
@@ -22,7 +22,7 @@
 <body>
   <main class="container">
     <!-- data-hervorheben: Wörter, die im Code gelb markiert werden (das Neue der Stunde) -->
-    <section class="ide" id="ide" aria-label="Processing-Simulation" data-hervorheben=".get .set spiegelIndex">
+    <section class="ide" id="ide" aria-label="Processing-Simulation" data-hervorheben="">
       <div class="ide-toolbar">
         <button class="ide-button" id="runButton" type="button" title="Ausführen" aria-label="Ausführen">
           <span class="ide-icon ide-icon-run" aria-hidden="true"></span>
@@ -70,7 +70,7 @@
 
   <!-- Quelltext des Sketches: ein Block pro Reiter, der erste ist der Hauptreiter.
        Die Seite zeigt genau diesen Text an und führt ihn beim Klick auf ▶ aus. -->
-<script type="text/x-processing" data-tab="A1">
+<script type="text/x-processing" data-tab="A2">
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,20 +81,21 @@ void setup() {
 void draw() {
   ArrayList<Integer> list = new ArrayList<Integer>();
 
-  // Fügt die Zahlen 1 bis 5 als Liste hinzu
-  list.addAll(List.of(1, 2, 3, 4, 5, 6));
+  // Beispiel-Liste mit ungeordneten Zahlen
+  list.addAll(List.of(3, 12, 7, 1, 5));
+  println("Liste: " + list);
 
-  println(list);
+  int groesstesElement = list.get(0);
 
-  for (int i = 0; i < list.size() / 2; i++) {
-    int spiegelIndex = list.size() - 1 - i;
+  for (int i = 1; i < list.size(); i++) {
+    int aktuellesElement = list.get(i);
 
-    int temp = list.get(i);
-    list.set(i, list.get(spiegelIndex));
-    list.set(spiegelIndex, temp);
+    if (aktuellesElement > groesstesElement) {
+      groesstesElement = aktuellesElement;
+    }
   }
 
-  println(list);
+  println("Das größte Element ist: " + groesstesElement);
 
   noLoop();
 }
