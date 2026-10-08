@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A3 – Aufgabe 3</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    /* Im iframe (z. B. in Logseq) füllt die IDE den ganzen Rahmen. Steht im head,
+       damit das Layout nicht springt. ?embed=1 bzw. ?embed=0 erzwingt es. */
+    (() => {
+      const wunsch = new URLSearchParams(location.search).get("embed");
+      let imRahmen = true;
+      try { imRahmen = window.self !== window.top; } catch { /* fremder Rahmen */ }
+      if (wunsch === "1" || (wunsch !== "0" && imRahmen)) {
+        document.documentElement.classList.add("is-embedded");
+      }
+    })();
+  </script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <main class="container">
+    <!-- data-hervorheben: Wörter, die im Code gelb markiert werden (das Neue der Stunde) -->
+    <section class="ide" id="ide" aria-label="Processing-Simulation" data-hervorheben="">
+      <div class="ide-toolbar">
+        <button class="ide-button" id="runButton" type="button" title="Ausführen" aria-label="Ausführen">
+          <span class="ide-icon ide-icon-run" aria-hidden="true"></span>
+        </button>
+        <button class="ide-button" id="stopButton" type="button" title="Stopp" aria-label="Stopp" disabled>
+          <span class="ide-icon ide-icon-stop" aria-hidden="true"></span>
+        </button>
+        <button class="ide-text-button ide-download" id="downloadButton" type="button">Projekt-Downloaden</button>
+        <span class="ide-mode" aria-hidden="true">Java</span>
+      </div>
+
+      <div class="ide-tabbar">
+        <div class="ide-tabs" id="ideTabs" role="tablist" aria-label="Dateien des Sketches"></div>
+        <button class="ide-text-button ide-copy" id="copyButton" type="button">Kopieren</button>
+      </div>
+
+      <div class="ide-editor" id="ideEditor">
+        <div class="code-view" id="codeView" role="tabpanel" tabindex="0"></div>
+      </div>
+
+      <p class="ide-message" id="ideMessage" aria-live="polite">Klicke auf ▶, um den Sketch zu starten.</p>
+
+      <div class="ide-console" id="ideConsole" role="log" aria-label="Konsole" tabindex="0"></div>
+
+      <div class="ide-console-tabs" aria-hidden="true">
+        <span class="ide-console-tab is-active">Konsole</span>
+        <span class="ide-console-tab">Fehler</span>
+      </div>
+
+      <div class="sketch-window" id="sketchWindow" hidden>
+        <div class="sketch-titlebar" id="sketchTitlebar">
+          <span class="sketch-title" id="sketchTitle"></span>
+          <button class="sketch-close" id="sketchClose" type="button" title="Schließen" aria-label="Sketch-Fenster schließen">✕</button>
+        </div>
+        <div class="sketch-body">
+          <canvas class="sketch-canvas" id="sketchCanvas" width="100" height="100"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p>
+  </footer>
+
+  <!-- Quelltext des Sketches: ein Block pro Reiter, der erste ist der Hauptreiter.
+       Die Seite zeigt genau diesen Text an und führt ihn beim Klick auf ▶ aus. -->
+<script type="text/x-processing" data-tab="A3">
+import java.util.ArrayList;
+import java.util.List;
+
+void setup() {
+  size(200, 200);
+}
+
+void draw() {
+  ArrayList<Integer> liste = new ArrayList<Integer>();
+  liste.addAll(List.of(2, 5, 8, 12, 16, 23, 38, 42, 56));
+  int gesucht = 23;
+
+  println("Liste: " + liste);
+  println("Gesucht: " + gesucht);
+  int index = suche(liste, gesucht);
+  println("Index: " + index);
+
+  noLoop();
+}
+
+int suche(ArrayList<Integer> liste, int gesucht) {
+  int links = 0;
+  int rechts = liste.size() - 1;
+
+  while (links <= rechts) {
+    int mitte = links + (rechts - links) / 2;
+    int wert = liste.get(mitte);
+
+    if (wert == gesucht) {
+      return mitte;
+    } else if (wert < gesucht) {
+      links = mitte + 1;
+    } else {
+      rechts = mitte - 1;
+    }
+  }
+
+  return -1;
+}
+</script>
+</body>
+</html>
