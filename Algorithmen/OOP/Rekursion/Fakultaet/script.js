@@ -8,6 +8,8 @@ const diagramWrap = document.querySelector("#diagramWrap");
 const nextButton = document.querySelector("#next");
 const previousButton = document.querySelector("#previous");
 const firstButton = document.querySelector("#first");
+const fullscreenButton = document.querySelector("#fullscreen");
+const fullscreenFeedback = document.querySelector("#fullscreenFeedback");
 const choiceButtons = [...document.querySelectorAll("[data-n]")];
 const svgNamespace = "http://www.w3.org/2000/svg";
 
@@ -225,6 +227,36 @@ function goTo(step) {
   persist();
   render();
 }
+
+fullscreenButton.addEventListener("click", async () => {
+  fullscreenFeedback.hidden = true;
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      if (!document.fullscreenEnabled || !document.documentElement.requestFullscreen) {
+        throw new Error("Vollbild nicht verfügbar");
+      }
+      await document.documentElement.requestFullscreen();
+    }
+  } catch {
+    fullscreenFeedback.textContent = "Vollbild ist hier gesperrt. Erlaube Vollbild in der Logseq-Einbettung oder öffne die Seite separat.";
+    const link = document.createElement("a");
+    link.href = window.location.href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Seite öffnen";
+    fullscreenFeedback.append(" ", link);
+    fullscreenFeedback.hidden = false;
+  }
+});
+
+document.addEventListener("fullscreenchange", () => {
+  const active = Boolean(document.fullscreenElement);
+  fullscreenButton.textContent = active ? "Vollbild beenden" : "Vollbild";
+  fullscreenButton.setAttribute("aria-pressed", String(active));
+  fullscreenFeedback.hidden = true;
+});
 
 firstButton.addEventListener("click", () => goTo(0));
 previousButton.addEventListener("click", () => goTo(state.step - 1));

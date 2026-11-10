@@ -270,6 +270,10 @@ h3 { margin-top: 0; color: #d9f8ff; }
 .choice[aria-pressed="true"] { color: var(--primary); border-color: var(--primary); background: rgba(34,211,238,.1); }
 .step-count { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4rem; text-align: center; font-size: 0.85rem; }
 .button:disabled { transform: none; filter: none; }
+:root:fullscreen { overflow-y: auto; background-color: var(--bg); }
+#fullscreenFeedback { margin: 0 0 1rem; }
+#fullscreenFeedback a { color: var(--primary); }
+#fullscreenFeedback a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .ide { border-color: var(--border); border-radius: 10px; background: var(--bg); }
 .ide-tabs { background: var(--button-dark); border-bottom: 1px solid var(--border); padding-top: 0.4rem; }
 .ide-tab { cursor: default; }
