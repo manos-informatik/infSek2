@@ -1,0 +1,146 @@
+/* Codeansicht im Look der Processing-IDE - Werkzeugleiste, Reiter, Zeilennummern,
+   Syntaxfarben. Gedacht für ein Overlay, in dem Schülerinnen und Schüler den zur Seite
+   gehörenden Quelltext ansehen (nicht bearbeiten).
+
+   Erwartete Struktur:
+   .ide > .ide-toolbar (.ide-icon-run, .ide-icon-stop, .ide-mode)
+        > .ide-tabs    (button.ide-tab[.is-active] …)
+        > .ide-editor  (.code-view > .ide-line > .ide-gutter + .ide-code)
+
+   Der Code wird per JS aus dem echten Seitenzustand erzeugt und als Textknoten
+   eingefügt (createElement/textContent, kein innerHTML). Keine input-Elemente -
+   dadurch ist er automatisch nicht editierbar.
+
+   Breiteres Overlay nicht vergessen:
+   .code-overlay-content { width: min(760px, calc(100% - 32px)); } */
+
+.ide {
+  overflow: hidden;
+  border: 1px solid #7ea6c4;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.ide-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: #c9def0;
+  border-bottom: 1px solid #a8c6de;
+}
+
+.ide-icon {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #2d7bb6;
+}
+
+.ide-icon-run::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 0.32rem 0 0.32rem 0.5rem;
+  border-color: transparent transparent transparent #ffffff;
+}
+
+.ide-icon-stop::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+}
+
+.ide-mode {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #8fb2cc;
+  border-radius: 4px;
+  background: #eaf3fa;
+  color: #1a3d55;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.ide-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0.35rem 0.5rem 0;
+  background: #c9def0;
+}
+
+.ide-tab {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #a8c6de;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  background: #b4d2e8;
+  color: #14344a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ide-tab.is-active {
+  background: #ffffff;
+  color: #0d2433;
+}
+
+.ide-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 123, 182, 0.55);
+}
+
+.ide-editor {
+  max-height: 46vh;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.code-view {
+  padding: 0.5rem 0;
+  font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.code-view:focus-visible {
+  outline: 2px solid #2d7bb6;
+  outline-offset: -2px;
+}
+
+.ide-line {
+  display: flex;
+  align-items: flex-start;
+  white-space: pre;
+}
+
+.ide-gutter {
+  flex: 0 0 2.6rem;
+  padding-right: 0.6rem;
+  border-right: 1px solid #dbe6ee;
+  color: #8aa0b0;
+  text-align: right;
+  user-select: none;
+}
+
+.ide-code {
+  padding-left: 0.8rem;
+  color: #10202b;
+}
+
+/* Syntaxfarben, angelehnt an die Processing-IDE */
+.tok-keyword  { color: #33997e; }                    /* void, class, new, this, if … */
+.tok-type     { color: #e2661a; }                    /* color, int, float, boolean */
+.tok-function { color: #006699; font-weight: 700; }  /* setup, draw, circle, fill … */
+.tok-number   { color: #2d7bb6; }
+.tok-comment  { color: #7e7e7e; font-style: italic; }

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fakultät – Rekursion</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="processing-ide.css">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Rekursion</p>
+      <h1>Fakultät</h1>
+    </div>
+  </header>
+  <main class="container">
+    <section class="panel simulation" aria-label="Rekursive Fakultät schrittweise ausführen">
+      <div class="controls" aria-label="Steuerung">
+        <div class="input-choice" role="group" aria-label="Startwert n">
+          <button class="button choice" type="button" data-n="1" aria-pressed="false">n = 1</button>
+          <button class="button choice" type="button" data-n="5" aria-pressed="true">n = 5</button>
+        </div>
+        <div class="step-controls">
+          <button class="button button-secondary" id="first" type="button">Erster Schritt</button>
+          <button class="button button-secondary" id="previous" type="button">Zurück</button>
+          <button class="button button-primary" id="next" type="button">Nächster Schritt</button>
+        </div>
+        <output class="step-count" id="stepCount"></output>
+      </div>
+      <div class="ide">
+        <div class="ide-tabs"><span class="ide-tab is-active">Fakultaet.pde</span></div>
+        <div class="ide-editor">
+          <div class="code-view" id="codeView" tabindex="0" role="region" aria-label="Processing-Code mit aktueller Zeile"></div>
+        </div>
+      </div>
+      <div class="diagram-wrap" id="diagramWrap">
+        <svg id="diagram" role="img" aria-labelledby="diagramTitle diagramDescription"></svg>
+      </div>
+      <p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>
+    </section>
+  </main>
+  <footer class="footer"><p>&copy; 2026 Martin-Andersen-Nexö-Gymnasium Dresden</p></footer>
+</body>
+</html>
